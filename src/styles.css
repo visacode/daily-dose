@@ -75,23 +75,14 @@ img { max-width: 100%; display: block; }
 .rules span:first-child { height: 3px; }
 .rules span:last-child { height: 1px; margin-top: 3px; }
 
-body::before {
-  content: "";
-  position: fixed;
-  z-index: 4;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--paper);
-  pointer-events: none;
-}
 .nav {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: 0;
   z-index: 5;
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
+  box-shadow: none;
 }
 .nav-inner { display: flex; align-items: center; gap: 12px; min-height: 46px; }
 .nav-links { display: flex; gap: 18px; overflow-x: auto; flex: 1; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
