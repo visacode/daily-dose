@@ -18,6 +18,15 @@ import "./styles.css";
 
 registerServiceWorker();
 
+const viewDoc = document as unknown as { startViewTransition?: (update?: unknown) => unknown };
+if (typeof viewDoc.startViewTransition === "function") {
+  viewDoc.startViewTransition = (update?: unknown) => {
+    const callback = typeof update === "function" ? (update as () => void | Promise<void>) : undefined;
+    const done = Promise.resolve().then(callback).then(() => undefined);
+    return { finished: done, ready: Promise.resolve(), updateCallbackDone: done, skipTransition() {}, types: new Set<string>() };
+  };
+}
+
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root");
 

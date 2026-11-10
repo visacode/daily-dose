@@ -143,6 +143,7 @@ export function Watch({
   const mutedRef = useRef(muted);
   const playerRef = useRef<YTPlayer | null>(null);
   const startY = useRef<number | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   mutedRef.current = muted;
   const item = items[index];
   const vertical = item ? isVerticalVideo(item) : false;
@@ -173,12 +174,7 @@ export function Watch({
       else if (event.key === "m" || event.key === "M") setMuted((current) => !current);
     };
     window.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [items.length, onClose]);
 
   useEffect(() => {
@@ -203,11 +199,18 @@ export function Watch({
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("button, a, iframe")) return;
     startY.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (startY.current === null || !stageRef.current) return;
+    const delta = event.clientY - startY.current;
+    stageRef.current.style.transform = `translate3d(0, ${delta}px, 0)`;
   };
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     if (startY.current === null) return;
     const delta = event.clientY - startY.current;
     startY.current = null;
+    if (stageRef.current) stageRef.current.style.transform = "";
     if (delta < -48) go(1);
     else if (delta > 48) go(-1);
   };
@@ -225,7 +228,7 @@ export function Watch({
         {!embedded && <button type="button" className="watch-btn" onClick={onClose} aria-label="Close watch">✕</button>}
       </div>
       {!reduced && timed && <div key={item.href} className="watch-timer" />}
-      <div className="watch-stage" key={item.href} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+      <div ref={stageRef} className="watch-stage" key={item.href} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
         {youtube && (
           <YouTubeSlide
             id={youtube}

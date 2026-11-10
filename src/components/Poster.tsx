@@ -8,7 +8,6 @@ export function Poster({
   large = false,
   seen = false,
   fresh = false,
-  lifting = false,
   onOpen,
   onHold,
 }: {
@@ -16,7 +15,6 @@ export function Poster({
   large?: boolean;
   seen?: boolean;
   fresh?: boolean;
-  lifting?: boolean;
   onOpen: (item: Item) => void;
   onHold?: (item: Item) => void;
 }) {
@@ -46,9 +44,10 @@ export function Poster({
         <img
           src={thumb}
           alt=""
+          width={large ? 460 : 168}
+          height={large ? 560 : 248}
           loading="lazy"
           decoding="async"
-          style={lifting ? { viewTransitionName: "dose-media" } : undefined}
           onError={() => setBroken(true)}
         />
       ) : (

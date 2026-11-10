@@ -27,12 +27,7 @@ export function SavedPage() {
           <IonTitle>Saved</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Saved</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+      <IonContent>
         <p className="ion-padding-horizontal ion-text-wrap">On this device, across days.</p>
         {items.length === 0 ? (
           <p className="ion-padding">Save a find and it stays here.</p>

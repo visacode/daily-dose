@@ -1,4 +1,4 @@
-import { IonContent, IonPage } from "@ionic/react";
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react";
 import { useState } from "react";
 import { Watch } from "../components/Watch";
 import { useDose } from "../dose";
@@ -15,6 +15,11 @@ export function WatchPage() {
   const items = (edition?.items ?? []).filter(isWatchItem);
   return (
     <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Watch</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent scrollY={false} className="watch-content">
         {items.length === 0 ? (
           <p className="ion-padding">No videos in this day.</p>
