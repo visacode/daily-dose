@@ -97,7 +97,9 @@ function normalizeItem(raw: unknown): Item | null {
 
 export function requestedDay(): string | null {
   const day = new URLSearchParams(window.location.search).get("day");
-  return day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+  const match = window.location.hash.match(/\/issue\/(\d{4}-\d{2}-\d{2})(?:\/|$)/);
+  return match?.[1] ?? null;
 }
 
 export async function loadIndex(): Promise<DayIndex> {
