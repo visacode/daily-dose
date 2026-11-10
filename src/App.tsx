@@ -1,5 +1,6 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { ArchiveView } from "./components/ArchiveView";
+import { FinishedView } from "./components/FinishedView";
 import { Front } from "./components/Front";
 import { SavedView } from "./components/SavedView";
 import { SearchView } from "./components/SearchView";
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/archive" element={<ArchiveView />} />
             <Route path="/search" element={<SearchView />} />
             <Route path="/story/:id" element={<StoryView />} />
+            <Route path="/finished" element={<FinishedView />} />
             <Route path="*" element={<Front />} />
           </Route>
         </Routes>

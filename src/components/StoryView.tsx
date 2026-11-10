@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { sanitizeArticleHtml } from "../article";
 import { useDose } from "../dose";
 import { appDetails, directionsLinks, placeDetails, telHref } from "../details";
 import { byline, kickerLabel, pullQuote, readMinutes, storyPath, topPath } from "../magazine";
 import { cardThumb, isPlayable, safeHttpUrl } from "../media";
+import { setMeta } from "../share";
 import { Player, StoryMedia } from "./MediaBlock";
 
 function storyId(id: string | undefined): string {
@@ -19,6 +21,7 @@ export function StoryView() {
   const dose = useDose();
   const navigate = useNavigate();
   const item = dose.findItem(href);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">(() => (document.documentElement.dataset.theme === "dark" ? "dark" : "light"));
 
   useEffect(() => {
@@ -34,6 +37,12 @@ export function StoryView() {
 
   useEffect(() => {
     document.title = item ? `${item.title} — Daily Dose` : "Daily Dose";
+    if (item) {
+      setMeta("property", "og:title", item.title);
+      setMeta("property", "og:description", item.note);
+      setMeta("name", "description", item.note);
+      if (item.image?.startsWith("http")) setMeta("property", "og:image", item.image);
+    }
     return () => { document.title = "Daily Dose"; };
   }, [item]);
 
@@ -66,8 +75,29 @@ export function StoryView() {
     else navigate(home);
   };
 
+  const at = dose.edition.items.findIndex((entry) => entry.href === item.href);
+  const previous = at > 0 ? dose.edition.items[at - 1] : null;
+  const following = at >= 0 && at < dose.edition.items.length - 1 ? dose.edition.items[at + 1] : null;
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest("a, button, input, iframe")) return;
+    swipe.current = { x: event.clientX, y: event.clientY };
+  };
+  const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!swipe.current || window.innerWidth > 800) {
+      swipe.current = null;
+      return;
+    }
+    const dx = event.clientX - swipe.current.x;
+    const dy = event.clientY - swipe.current.y;
+    swipe.current = null;
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    if (dx < 0 && following) navigate(storyPath(following));
+    else if (dx < 0) navigate("/finished");
+    else if (dx > 0 && previous) navigate(storyPath(previous));
+  };
+
   return (
-    <article className="story">
+    <article className="story" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
       <button type="button" className="back" onClick={goBack}>Back</button>
       <p className="kicker" data-cat={item.cat}>{kickerLabel(item.cat)}</p>
       <h1 dir="auto">{item.title}</h1>
@@ -162,6 +192,9 @@ export function StoryView() {
           </ul>
         </section>
       )}
+      <p className="next-story">
+        {following ? <Link to={storyPath(following)}>Next story</Link> : <Link to="/finished">You've finished today's issue</Link>}
+      </p>
     </article>
   );
 }

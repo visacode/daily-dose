@@ -47,7 +47,7 @@ export function SearchView() {
       <h1>Search</h1>
       <form onSubmit={(event) => { event.preventDefault(); remember(query); }}>
         <label className="search-label" htmlFor="issue-search">Search this issue</label>
-        <input id="issue-search" className="search-field" value={query} placeholder="A place, a joke, an app" onChange={(event) => setQuery(event.target.value)} />
+        <input id="issue-search" className="search-field" value={query} placeholder="A place, a joke, an app" autoFocus onChange={(event) => setQuery(event.target.value)} />
       </form>
       <p className="search-tools">
         <button type="button" aria-pressed={dose.searchAll} onClick={() => dose.setSearchAll(!dose.searchAll)}>{dose.searchAll ? "All editions on" : "All editions"}</button>
