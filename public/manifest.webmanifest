@@ -1,12 +1,12 @@
 {
   "name": "Daily Dose",
   "short_name": "Daily Dose",
-  "description": "A personal daily-discovery dashboard. Memes, places, and hidden gems, read and watched on the page.",
+  "description": "A daily news magazine from Riyadh. Memes, places, things, and hidden gems, read on the page.",
   "start_url": "/daily-dose/",
   "scope": "/daily-dose/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#f4efe6",
+  "theme_color": "#f4efe6",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

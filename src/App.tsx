@@ -1,67 +1,37 @@
-import { IonActionSheet, IonApp, IonContent, IonModal, IonToast, setupIonicReact } from "@ionic/react";
-import { IonReactHashRouter } from "@ionic/react-router";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DoseProvider, itemHrefParam, useDose } from "./dose";
-import { Tabs } from "./pages/Tabs";
-
-setupIonicReact({ animated: true, swipeBackEnabled: true });
-
-function QuickSheet() {
-  const dose = useDose();
-  const navigate = useNavigate();
-  const [actions, setActions] = useState(false);
-  const item = dose.quick;
-  return (
-    <>
-      <IonModal isOpen={item !== null} initialBreakpoint={0.45} breakpoints={[0, 0.45, 0.92]} onDidDismiss={() => dose.setQuick(null)}>
-        <IonContent className="ion-padding">
-          {item && (
-            <div className="quick-sheet">
-              <p className="quick-kicker">{item.source} · {item.tag}</p>
-              <h2 dir="auto">{item.title}</h2>
-              <p dir="auto">{item.note}</p>
-              <div className="quick-actions">
-                <button type="button" onClick={() => dose.personal.toggleSave(item, dose.edition?.date ?? "")}>{dose.personal.isSaved(item.href) ? "Saved" : "Save"}</button>
-                <button type="button" onClick={() => setActions(true)}>Share or open</button>
-                <button type="button" onClick={() => { dose.setQuick(null); navigate(`/item/${itemHrefParam(item)}`); }}>Read</button>
-              </div>
-            </div>
-          )}
-        </IonContent>
-      </IonModal>
-      <IonActionSheet
-        isOpen={actions}
-        header={item?.title}
-        buttons={[
-          { text: "Share", handler: () => { if (item) void dose.share(item); } },
-          { text: "Open original", handler: () => { if (item) window.open(item.href, "_blank", "noopener"); } },
-          { text: "Cancel", role: "cancel" },
-        ]}
-        onDidDismiss={() => setActions(false)}
-      />
-      <IonToast isOpen={dose.toast !== ""} message={dose.toast} duration={1800} onDidDismiss={() => dose.setToast("")} />
-    </>
-  );
-}
-
-function AppRoutes() {
-  return (
-    <>
-      <Tabs />
-      <QuickSheet />
-    </>
-  );
-}
+import { HashRouter, Route, Routes } from "react-router-dom";
+import { ArchiveView } from "./components/ArchiveView";
+import { Front } from "./components/Front";
+import { SavedView } from "./components/SavedView";
+import { SearchView } from "./components/SearchView";
+import { SectionView } from "./components/SectionView";
+import { Shell } from "./components/Shell";
+import { StoryView } from "./components/StoryView";
+import { DoseProvider } from "./dose";
 
 export default function App() {
   return (
-    <IonApp>
+    <HashRouter>
       <DoseProvider>
-        <IonReactHashRouter>
-          <AppRoutes />
-        </IonReactHashRouter>
+        <Routes>
+          <Route element={<Shell />}>
+            <Route path="/" element={<Front />} />
+            <Route path="/issue/:date" element={<Front />} />
+            <Route path="/memes" element={<SectionView which="memes" />} />
+            <Route path="/places" element={<SectionView which="places" />} />
+            <Route path="/things" element={<SectionView which="things" />} />
+            <Route path="/gems" element={<SectionView which="gems" />} />
+            <Route path="/issue/:date/memes" element={<SectionView which="memes" />} />
+            <Route path="/issue/:date/places" element={<SectionView which="places" />} />
+            <Route path="/issue/:date/things" element={<SectionView which="things" />} />
+            <Route path="/issue/:date/gems" element={<SectionView which="gems" />} />
+            <Route path="/saved" element={<SavedView />} />
+            <Route path="/archive" element={<ArchiveView />} />
+            <Route path="/search" element={<SearchView />} />
+            <Route path="/story/:id" element={<StoryView />} />
+            <Route path="*" element={<Front />} />
+          </Route>
+        </Routes>
       </DoseProvider>
-    </IonApp>
+    </HashRouter>
   );
 }

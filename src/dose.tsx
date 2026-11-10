@@ -101,10 +101,6 @@ export function DoseProvider({ children }: { children: ReactNode }) {
     try {
       const next = await loadEdition(date);
       setEdition(next);
-      const url = new URL(window.location.href);
-      if (date === index.latest) url.searchParams.delete("day");
-      else url.searchParams.set("day", date);
-      window.history.replaceState(null, "", url);
     } catch (reason: unknown) {
       setToast(reason instanceof Error ? reason.message : "Could not load that day");
     } finally {
