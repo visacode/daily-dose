@@ -21,6 +21,33 @@ export function useViewportWidth(): number {
   return width;
 }
 
+export function useRiyadhNow(): { time: string; hour: number; label: string } {
+  const read = () => {
+    const now = new Date();
+    try {
+      const time = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Riyadh",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(now);
+      const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", hourCycle: "h23" }).format(now));
+      const label = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", weekday: "long", day: "numeric", month: "long" }).format(now);
+      return { time, hour, label };
+    } catch {
+      return { time: "", hour: now.getHours(), label: "" };
+    }
+  };
+  const [now, setNow] = useState(read);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!document.hidden) setNow(read());
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return now;
+}
+
 export function useRiyadhClock(): string {
   const format = () => {
     try {

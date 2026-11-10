@@ -7,7 +7,7 @@
       name="description"
       content="Daily Dose is a personal daily-discovery dashboard: memes, trending places and things, and hidden gems, with video, posts, and maps that play on the page."
     />
-    <meta name="theme-color" content="#07060f" />
+    <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -22,18 +22,18 @@
         var theme = saved === "light" ? "light" : "dark";
         document.documentElement.dataset.theme = theme;
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", theme === "light" ? "#f4f1fb" : "#07060f");
+        if (meta) meta.setAttribute("content", theme === "light" ? "#f2f2f7" : "#000000");
       } catch (e) {}
     </script>
     <style>
       html,
       body {
         margin: 0;
-        background: #07060f;
+        background: #000;
       }
       html[data-theme="light"],
       html[data-theme="light"] body {
-        background: #f4f1fb;
+        background: #f2f2f7;
       }
     </style>
   </head>

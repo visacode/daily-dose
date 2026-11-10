@@ -119,15 +119,23 @@ export function Watch({
   startHref,
   theme,
   reduced,
+  embedded = false,
   onClose,
   onSeen,
+  onToggleSave,
+  onShare,
+  isSaved,
 }: {
   items: Item[];
   startHref?: string;
   theme: ThemeName;
   reduced: boolean;
+  embedded?: boolean;
   onClose: () => void;
   onSeen: (href: string) => void;
+  onToggleSave?: (item: Item) => void;
+  onShare?: (item: Item) => void;
+  isSaved?: (href: string) => boolean;
 }) {
   const initial = Math.max(0, items.findIndex((item) => item.href === startHref));
   const [index, setIndex] = useState(initial === -1 ? 0 : initial);
@@ -209,15 +217,15 @@ export function Watch({
   const tiktok = kind === "tiktok" ? tiktokEmbedUrl(item.href) : null;
   const instagram = kind === "instagram" ? instagramEmbedUrl(item.href) : null;
 
+  const saved = isSaved?.(item.href) ?? false;
   return (
-    <div className="watch" role="dialog" aria-modal="true" aria-label="Watch">
+    <div className={`watch ${embedded ? "is-embedded" : ""}`} role="dialog" aria-modal="true" aria-label="Watch">
       <div className="watch-top">
         <span>{index + 1} / {items.length}</span>
-        <button type="button" className="watch-btn" aria-pressed={!muted} onClick={() => setMuted((current) => !current)}>{muted ? "Unmute" : "Mute"}</button>
-        <button type="button" className="watch-btn" onClick={onClose} aria-label="Close watch">✕</button>
+        {!embedded && <button type="button" className="watch-btn" onClick={onClose} aria-label="Close watch">✕</button>}
       </div>
       {!reduced && timed && <div key={item.href} className="watch-timer" />}
-      <div className="watch-stage" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+      <div className="watch-stage" key={item.href} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
         {youtube && (
           <YouTubeSlide
             id={youtube}
@@ -230,16 +238,7 @@ export function Watch({
           />
         )}
         {file && (
-          <video
-            key={file}
-            className={`watch-video ${vertical ? "is-vertical" : ""}`}
-            src={file}
-            autoPlay
-            playsInline
-            muted={muted}
-            controls
-            onEnded={() => go(1)}
-          />
+          <video key={file} className="watch-video is-vertical" src={file} autoPlay playsInline muted={muted} controls onEnded={() => go(1)} />
         )}
         {tweet && <WatchTweet statusId={tweet} theme={theme} />}
         {tiktok && (
@@ -256,10 +255,11 @@ export function Watch({
           <strong dir="auto">{item.title}</strong>
           <span dir="auto">{item.source} · {item.tag}</span>
         </div>
-      </div>
-      <div className="watch-nav">
-        <button type="button" className="watch-btn" onClick={() => go(-1)} aria-label="Previous video">↑</button>
-        <button type="button" className="watch-btn" onClick={() => go(1)} aria-label="Next video">↓</button>
+        <div className="watch-rail">
+          <button type="button" aria-pressed={!muted} onClick={() => setMuted((current) => !current)}>{muted ? "Mute off" : "Mute"}</button>
+          {onToggleSave && <button type="button" aria-pressed={saved} onClick={() => onToggleSave(item)}>{saved ? "Saved" : "Save"}</button>}
+          {onShare && <button type="button" onClick={() => onShare(item)}>Share</button>}
+        </div>
       </div>
     </div>
   );
