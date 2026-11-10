@@ -3,11 +3,14 @@ import { Card, Row } from "./components/Cards";
 import { Aurora } from "./components/Aurora";
 import { Clock, Spotlight, StatTile, Ticker } from "./components/Chrome";
 import { Reader } from "./components/Reader";
+import { Watch } from "./components/Watch";
 import { loadEdition, loadInitial, requestedDay } from "./data";
 import { readStoredTheme, readStoredView, usePrefersReducedMotion, useViewportWidth } from "./hooks";
+import { isWatchItem, safeHttpUrl } from "./media";
 import { grad, META, TABS } from "./meta";
+import { usePersonal } from "./personal";
 import { countCats, filterItems, groupItems, spotlightPicks } from "./select";
-import type { DayIndex, Edition, ReaderState, TabId, ThemeName, ViewMode } from "./types";
+import type { DayIndex, Edition, Item, ReaderState, TabId, ThemeName, ViewMode } from "./types";
 
 export default function App() {
   const reduced = usePrefersReducedMotion();
@@ -27,6 +30,11 @@ export default function App() {
   const [attempt, setAttempt] = useState(0);
   const [reader, setReader] = useState<ReaderState | null>(null);
   const [readerIn, setReaderIn] = useState(false);
+  const [watchHref, setWatchHref] = useState<string | null>(null);
+  const [searchAll, setSearchAll] = useState(false);
+  const [archive, setArchive] = useState<Edition[]>([]);
+  const [archiveState, setArchiveState] = useState<"idle" | "loading" | "ready">("idle");
+  const personal = usePersonal();
   const searchRef = useRef<HTMLInputElement>(null);
   const closeTimer = useRef(0);
   const openTimer = useRef(0);
@@ -74,6 +82,37 @@ export default function App() {
     if (edition) document.title = `Daily Dose · ${edition.updated}`;
   }, [edition]);
 
+  useEffect(() => {
+    personal.touchStreak();
+  }, [personal.touchStreak]);
+
+  useEffect(() => {
+    if (!searchAll || !index || !edition) return;
+    const missing = index.days.filter((day) => day.date !== edition.date);
+    if (missing.length === 0) {
+      setArchiveState("ready");
+      return;
+    }
+    let cancel = false;
+    setArchiveState("loading");
+    (async () => {
+      const loaded: Edition[] = [];
+      for (const day of missing) {
+        if (cancel) return;
+        try {
+          loaded.push(await loadEdition(day.date));
+          if (!cancel) setArchive([...loaded]);
+        } catch {
+          /* a blocked or missing day stays out of the archive search */
+        }
+      }
+      if (!cancel) setArchiveState("ready");
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [searchAll, index, edition]);
+
   const visible = useMemo(
     () => (edition ? filterItems(edition.items, tab, query, seed) : []),
     [edition, tab, query, seed],
@@ -81,11 +120,13 @@ export default function App() {
   const groups = useMemo(() => groupItems(visible, tab), [visible, tab]);
   const ordered = useMemo(() => groups.flatMap((group) => group.items), [groups]);
   const picks = useMemo(() => (edition ? spotlightPicks(edition.items) : []), [edition]);
+  const watchItems = useMemo(() => (edition ? edition.items.filter(isWatchItem) : []), [edition]);
 
   const openItem = (item: (typeof ordered)[number]) => {
     if (!edition) return;
     window.clearTimeout(closeTimer.current);
     window.clearTimeout(openTimer.current);
+    personal.markSeen(item.href);
     const list = ordered.some((entry) => entry.href === item.href) ? ordered : edition.items;
     const wasOpen = readerRef.current !== null && readerIn;
     setReader({ item, list });
@@ -127,7 +168,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!reader) return;
+    if (!reader || watchHref) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -147,7 +188,7 @@ export default function App() {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
-  }, [reader]);
+  }, [reader, watchHref]);
 
   const selectDay = async (date: string) => {
     if (!index || !edition || date === edition.date) return;
@@ -187,6 +228,9 @@ export default function App() {
         ) : (
           <>
             <div className="hero hero-loading" />
+            <div className="skeleton-grid" aria-hidden="true">
+              {Array.from({ length: 6 }, (_, index) => <div className="skeleton-card" key={index} />)}
+            </div>
             <p>Loading today’s finds…</p>
           </>
         )}
@@ -197,6 +241,53 @@ export default function App() {
   const sources = new Set(edition.items.map((item) => item.source)).size;
   const days = [...index.days].sort((a, b) => b.date.localeCompare(a.date));
   const onLatest = edition.date === index.latest;
+  const anySeen = personal.seen.length > 0;
+  const archiveMode = searchAll && query.trim() !== "" && tab !== "saved";
+  const scopeTab: TabId = tab === "saved" ? "all" : tab;
+  const archiveHits = [edition, ...archive]
+    .map((day) => ({
+      date: day.date,
+      updated: day.updated,
+      items: filterItems(day.items, scopeTab, query, 0),
+    }))
+    .filter((day) => day.items.length > 0);
+  const savedVisible = filterItems(
+    personal.saved.map((record) => {
+      const full = [edition, ...archive].flatMap((day) => day.items).find((entry) => entry.href === record.href);
+      if (full) return full;
+      const partial: Item = {
+        cat: record.cat,
+        title: record.title,
+        note: record.note,
+        source: record.source,
+        href: record.href,
+        tag: record.tag,
+        read: record.read,
+        image: record.image,
+      };
+      return partial;
+    }),
+    "all",
+    query,
+    0,
+  );
+  const shareItem = async (item: Item) => {
+    const url = safeHttpUrl(item.href) ?? item.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: item.title, text: item.note, url });
+      } catch {
+        /* the share sheet was dismissed */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setBanner("Link copied");
+    } catch {
+      setBanner(url);
+    }
+  };
 
   return (
     <main className="page">
@@ -229,6 +320,13 @@ export default function App() {
             {onLatest ? " today" : ` on ${edition.updated}`}: what’s funny, what’s trending, and the gems most people miss.
             Tap any find to watch or read it here.{onLatest ? " Refreshes every morning around 9 AM." : ""}
           </p>
+          <div className="progress-row">
+            <span>{edition.items.filter((item) => personal.isSeen(item.href)).length} of {edition.items.length} seen</span>
+            <span className="progress-track" aria-hidden="true">
+              <span style={{ width: `${Math.round((edition.items.filter((item) => personal.isSeen(item.href)).length / edition.items.length) * 100)}%` }} />
+            </span>
+            {personal.streak.count > 0 && <span>{personal.streak.count}-day streak</span>}
+          </div>
           <div className="stats">
             <StatTile label="Memes & funny" short="Memes" icon="😂" bot="Daily Memes" accent="memes" count={countCats(edition.items, ["memes"])} active={tab === "memes"} reduced={reduced} onPick={() => setTab("memes")} />
             <StatTile label="Trending now" short="Trends" icon="🔥" bot="Trend Spotter" accent="places" count={countCats(edition.items, ["places", "things"])} active={tab === "trends"} reduced={reduced} onPick={() => setTab("trends")} />
@@ -268,6 +366,11 @@ export default function App() {
               </button>
             );
           })}
+          <button type="button" role="tab" aria-selected={tab === "saved"} className={`chip ${tab === "saved" ? "is-on" : ""}`} style={tab === "saved" ? { background: "linear-gradient(90deg, #FF3D7F, #7C4DFF)" } : undefined} onClick={() => setTab("saved")}>
+            <span aria-hidden="true">★</span>
+            <span>Saved</span>
+            <span className="count-badge">{personal.saved.length}</span>
+          </button>
         </div>
         <label className="search">
           <span aria-hidden="true">⌕</span>
@@ -287,6 +390,12 @@ export default function App() {
           <button type="button" className={`chip ${view === "cards" ? "is-on" : ""}`} style={view === "cards" ? { background: "linear-gradient(90deg, #7C4DFF, #3DA5FF)" } : undefined} onClick={() => setView("cards")}>▣ Cards</button>
           <button type="button" className={`chip ${view === "list" ? "is-on" : ""}`} style={view === "list" ? { background: "linear-gradient(90deg, #7C4DFF, #3DA5FF)" } : undefined} onClick={() => setView("list")}>☰ List</button>
           <button type="button" className={`chip ${seed !== 0 ? "is-on" : ""}`} style={seed !== 0 ? { background: "linear-gradient(90deg, #FF3D7F, #FF9A3D)" } : undefined} onClick={() => setSeed(Math.random() * 1000 + 1)}>🎲 Shuffle</button>
+          {watchItems.length > 0 && (
+            <button type="button" className="chip is-on" style={{ background: "linear-gradient(90deg, #FF3D7F, #FF9A3D)" }} onClick={() => setWatchHref(watchItems[0].href)}>▶ Watch</button>
+          )}
+          <button type="button" className={`chip ${searchAll ? "is-on" : ""}`} style={searchAll ? { background: "linear-gradient(90deg, #0FB5A6, #3DA5FF)" } : undefined} aria-pressed={searchAll} onClick={() => setSearchAll((value) => !value)}>
+            {searchAll ? "All days" : "This day"}
+          </button>
           <label className="day-picker">
             <span className="sr-only">Edition</span>
             <select value={edition.date} aria-label="Choose a day" disabled={pending} onChange={(event) => void selectDay(event.target.value)}>
@@ -302,9 +411,47 @@ export default function App() {
 
       <div id="finds" className={pending ? "is-pending" : undefined}>
         <p className="result-count" aria-live="polite">
-          {query.trim() ? `${visible.length} matching finds` : `${visible.length} finds`}
+          {tab === "saved"
+            ? `${savedVisible.length} saved`
+            : archiveMode
+              ? `${archiveHits.length} matches${archiveState === "loading" ? " · loading older days" : ""}`
+              : query.trim()
+                ? `${visible.length} matching finds`
+                : `${visible.length} finds`}
         </p>
-        {groups.map((group) => {
+        {tab === "saved" && savedVisible.length === 0 && (
+          <div className="empty">
+            <div aria-hidden="true">★</div>
+            <p>Saved finds stay on this device, across days.</p>
+          </div>
+        )}
+        {tab === "saved" && savedVisible.length > 0 && (
+          <div className={view === "cards" ? "cards" : "list"}>
+            {savedVisible.map((item, itemIndex) => view === "cards" ? (
+              <Card key={item.href} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} saved dateLabel={personal.saved.find((entry) => entry.href === item.href)?.date} onToggleSave={() => personal.toggleSave(item, edition.date)} />
+            ) : (
+              <Row key={item.href} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} dateLabel={personal.saved.find((entry) => entry.href === item.href)?.date} />
+            ))}
+          </div>
+        )}
+        {archiveMode && archiveHits.map((hit) => (
+          <section className="section" key={hit.date}>
+            <div className="section-head">
+              <span className="section-copy">
+                <h2>{hit.updated}</h2>
+                <p>{hit.items.length} matches</p>
+              </span>
+            </div>
+            <div className={view === "cards" ? "cards" : "list"}>
+              {hit.items.map((item, itemIndex) => view === "cards" ? (
+                <Card key={item.href} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} saved={personal.isSaved(item.href)} dateLabel={hit.date} onToggleSave={() => personal.toggleSave(item, hit.date)} />
+              ) : (
+                <Row key={item.href} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} dateLabel={hit.date} />
+              ))}
+            </div>
+          </section>
+        ))}
+        {!archiveMode && tab !== "saved" && groups.map((group) => {
           const meta = META[group.cat];
           return (
             <section className="section" key={`${group.cat}-${tab}-${seed}-${query}`}>
@@ -319,20 +466,20 @@ export default function App() {
               {view === "cards" ? (
                 <div className="cards">
                   {group.items.map((item, itemIndex) => (
-                    <Card key={`${seed}-${item.href}`} item={item} index={itemIndex} onOpen={openItem} />
+                    <Card key={`${seed}-${item.href}`} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} saved={personal.isSaved(item.href)} onToggleSave={() => personal.toggleSave(item, edition.date)} />
                   ))}
                 </div>
               ) : (
                 <div className="list">
                   {group.items.map((item, itemIndex) => (
-                    <Row key={`${seed}-${item.href}`} item={item} index={itemIndex} onOpen={openItem} />
+                    <Row key={`${seed}-${item.href}`} item={item} index={itemIndex} onOpen={openItem} seen={personal.isSeen(item.href)} fresh={anySeen && !personal.isSeen(item.href)} />
                   ))}
                 </div>
               )}
             </section>
           );
         })}
-        {visible.length === 0 && (
+        {tab !== "saved" && !archiveMode && visible.length === 0 && (
           <div className="empty">
             <div aria-hidden="true">🔍</div>
             <p>Nothing matches that search.</p>
@@ -355,8 +502,21 @@ export default function App() {
           open={readerIn}
           sheet={sheet}
           theme={theme}
+          saved={personal.isSaved(reader.item.href)}
           onClose={closeReader}
           onStep={stepReader}
+          onToggleSave={() => personal.toggleSave(reader.item, edition.date)}
+          onShare={() => void shareItem(reader.item)}
+        />
+      )}
+      {watchHref && (
+        <Watch
+          items={watchItems}
+          startHref={watchHref}
+          theme={theme}
+          reduced={reduced}
+          onClose={() => setWatchHref(null)}
+          onSeen={personal.markSeen}
         />
       )}
     </main>

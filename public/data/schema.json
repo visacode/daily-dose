@@ -55,6 +55,47 @@
         "mapQuery": {
           "type": "string",
           "description": "Optional Google Maps search text. Used when embed is map, or for places and gemPlaces."
+        },
+        "favicon": { "type": "string", "description": "Optional site icon URL." },
+        "videoStyle": {
+          "enum": ["short", "wide"],
+          "description": "Optional. short uses a vertical player. Inferred from Shorts, TikTok, and sub-75-second clips when omitted."
+        },
+        "article": {
+          "type": "object",
+          "description": "Optional full-text page. The enrich action fills this when the fields are empty. Bot-written values are kept.",
+          "properties": {
+            "html": { "type": "string" },
+            "paragraphs": { "type": "array", "items": { "type": "string" } },
+            "byline": { "type": "string" },
+            "published": { "type": "string" },
+            "siteName": { "type": "string" }
+          }
+        },
+        "place": {
+          "type": "object",
+          "description": "Optional place details. Facts such as Hours, Phone, and Address are used when these are omitted.",
+          "properties": {
+            "hours": { "type": "string" },
+            "price": { "type": "string" },
+            "area": { "type": "string" },
+            "phone": { "type": "string" },
+            "rating": { "type": "string" },
+            "photos": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "app": {
+          "type": "object",
+          "description": "Optional app details. Platform and price facts are used when these are omitted.",
+          "properties": {
+            "icon": { "type": "string" },
+            "screenshots": { "type": "array", "items": { "type": "string" } },
+            "rating": { "type": "string" },
+            "price": { "type": "string" },
+            "platforms": { "type": "array", "items": { "type": "string" } },
+            "appStore": { "type": "string" },
+            "playStore": { "type": "string" }
+          }
         }
       }
     }

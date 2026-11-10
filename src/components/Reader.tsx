@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
+import { sanitizeArticleHtml } from "../article";
+import { appDetails, directionsLinks, placeDetails, telHref } from "../details";
+import { FadeImg } from "./FadeImg";
 import { grad, META } from "../meta";
 import {
   directVideoUrl,
@@ -7,7 +10,7 @@ import {
   inferEmbed,
   instagramEmbedUrl,
   isPlayable,
-  isYoutubeShort,
+  isVerticalVideo,
   mapEmbedUrl,
   mapQueryFor,
   safeHttpUrl,
@@ -18,15 +21,14 @@ import {
 } from "../media";
 import type { Item, ThemeName } from "../types";
 
-function TweetEmbed({ statusId, theme }: { statusId: string; theme: ThemeName }) {
+const TweetHost = memo(function TweetHost({ statusId, theme, onStatus }: { statusId: string; theme: ThemeName; onStatus: (state: "ready" | "error") => void }) {
   const host = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-
+  const report = useRef(onStatus);
+  report.current = onStatus;
   useEffect(() => {
     const el = host.current;
     if (!el) return;
     let cancel = false;
-    setState("loading");
     el.replaceChildren();
     ensureTwitter()
       .then(() => {
@@ -34,16 +36,20 @@ function TweetEmbed({ statusId, theme }: { statusId: string; theme: ThemeName })
         return window.twttr.widgets.createTweet(statusId, host.current, { theme, dnt: true, align: "center" });
       })
       .then((node) => {
-        if (!cancel) setState(node ? "ready" : "error");
+        if (!cancel) report.current(node ? "ready" : "error");
       })
       .catch(() => {
-        if (!cancel) setState("error");
+        if (!cancel) report.current("error");
       });
     return () => {
       cancel = true;
     };
   }, [statusId, theme]);
+  return <div ref={host} className="tweet-host" />;
+}, (prev, next) => prev.statusId === next.statusId && prev.theme === next.theme);
 
+function TweetEmbed({ statusId, theme }: { statusId: string; theme: ThemeName }) {
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   return (
     <div className="embed-block">
       {state !== "ready" && (
@@ -51,12 +57,12 @@ function TweetEmbed({ statusId, theme }: { statusId: string; theme: ThemeName })
           {state === "error" ? "This post could not be embedded. The summary below stays on this page." : "Loading post…"}
         </p>
       )}
-      <div ref={host} className="tweet-host" />
+      <TweetHost statusId={statusId} theme={theme} onStatus={setState} />
     </div>
   );
 }
 
-function Media({ item, theme, active }: { item: Item; theme: ThemeName; active: boolean }) {
+function Media({ item, theme, active, skipPhoto = false }: { item: Item; theme: ThemeName; active: boolean; skipPhoto?: boolean }) {
   if (!active) return <div className="embed-status">Loading media…</div>;
   const kind = inferEmbed(item);
   const youtube = kind === "youtube" ? youtubeEmbedUrl(item) : null;
@@ -64,13 +70,13 @@ function Media({ item, theme, active }: { item: Item; theme: ThemeName; active: 
   const tiktok = kind === "tiktok" ? tiktokEmbedUrl(item.href) : null;
   const instagram = kind === "instagram" ? instagramEmbedUrl(item.href) : null;
   const video = directVideoUrl(item);
-  const photo = item.image && kind !== "youtube" ? item.image : null;
+  const photo = !skipPhoto && item.image && kind !== "youtube" ? item.image : null;
   const map = shouldShowMap(item);
 
   return (
     <div className="reader-media">
       {youtube && (
-        <div className={`frame ${isYoutubeShort(item) ? "is-short" : "is-wide"}`}>
+        <div className={`frame ${isVerticalVideo(item) ? "is-short" : "is-wide"}`}>
           <iframe
             title={item.title}
             src={youtube}
@@ -102,22 +108,84 @@ function Media({ item, theme, active }: { item: Item; theme: ThemeName; active: 
   );
 }
 
+function PlacePanel({ item }: { item: Item }) {
+  const place = placeDetails(item);
+  const links = directionsLinks(mapQueryFor(item));
+  const call = place.phone ? telHref(place.phone) : null;
+  const photos = (place.photos ?? []).filter((src, index, all) => all.indexOf(src) === index);
+  return (
+    <section className="detail-block" aria-label="Place">
+      {photos.length > 1 && (
+        <div className="gallery">
+          {photos.map((src) => <FadeImg key={src} src={src} alt="" />)}
+        </div>
+      )}
+      <div className="detail-grid">
+        {place.area && <p><span>Area</span><strong dir="auto">{place.area}</strong></p>}
+        {place.hours && <p><span>Hours</span><strong dir="auto">{place.hours}</strong></p>}
+        {place.price && <p><span>Price</span><strong dir="auto">{place.price}</strong></p>}
+        {place.rating && <p><span>Rating</span><strong dir="auto">{place.rating}</strong></p>}
+      </div>
+      <div className="detail-actions">
+        {call && place.phone && <a className="ghost-btn" href={call}>Call {place.phone}</a>}
+        <a className="ghost-btn" href={links.google} target="_blank" rel="noopener noreferrer">Directions</a>
+        <a className="ghost-btn" href={links.apple} target="_blank" rel="noopener noreferrer">Apple Maps</a>
+      </div>
+    </section>
+  );
+}
+
+function AppPanel({ item }: { item: Item }) {
+  const app = appDetails(item);
+  const shots = item.app?.screenshots ?? [];
+  const platforms = app.platforms ?? [];
+  const hasBody = Boolean(item.app?.icon || shots.length || app.price || app.rating || platforms.length || app.appStore || app.playStore);
+  if (!hasBody) return null;
+  return (
+    <section className="detail-block" aria-label="App">
+      <div className="app-head">
+        {item.app?.icon && <FadeImg src={item.app.icon} alt="" className="app-icon" />}
+        <div className="detail-grid">
+          {app.price && <p><span>Price</span><strong dir="auto">{app.price}</strong></p>}
+          {app.rating && <p><span>Rating</span><strong dir="auto">{app.rating}</strong></p>}
+          {platforms.length > 0 && <p><span>Platforms</span><strong dir="auto">{platforms.join(", ")}</strong></p>}
+        </div>
+      </div>
+      {shots.length > 0 && (
+        <div className="gallery">
+          {shots.map((src) => <FadeImg key={src} src={src} alt="" />)}
+        </div>
+      )}
+      <div className="detail-actions">
+        {app.appStore && <a className="ghost-btn" href={app.appStore} target="_blank" rel="noopener noreferrer">App Store</a>}
+        {app.playStore && <a className="ghost-btn" href={app.playStore} target="_blank" rel="noopener noreferrer">Google Play</a>}
+      </div>
+    </section>
+  );
+}
+
 export function Reader({
   item,
   list,
   open,
   sheet,
   theme,
+  saved,
   onClose,
   onStep,
+  onToggleSave,
+  onShare,
 }: {
   item: Item;
   list: Item[];
   open: boolean;
   sheet: boolean;
   theme: ThemeName;
+  saved: boolean;
   onClose: () => void;
   onStep: (delta: number) => void;
+  onToggleSave: () => void;
+  onShare: () => void;
 }) {
   const meta = META[item.cat];
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -129,6 +197,12 @@ export function Reader({
   const position = Math.max(0, list.findIndex((entry) => entry.href === item.href));
   const original = safeHttpUrl(item.href);
   const playable = isPlayable(item);
+  const articleHtml = item.article?.html ? sanitizeArticleHtml(item.article.html) : "";
+  const paragraphs = item.article?.paragraphs ?? [];
+  const tidy = (value?: string) => value?.replace(/\s+/g, " ").trim() ?? "";
+  const byline = [item.article?.siteName, item.article?.byline, item.article?.published].map((part) => tidy(part)).filter(Boolean).join(" · ");
+  const isPlace = item.cat === "places" || item.cat === "gemPlaces";
+  const isApp = item.cat === "gemApps";
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
@@ -196,14 +270,31 @@ export function Reader({
         </div>
         <div ref={bodyRef} className="reader-body">
           <div className="reader-chips">
+            {item.favicon && <img className="favicon" src={item.favicon} alt="" />}
             <span>{item.source}</span>
             <span>{item.tag}</span>
             {playable && <span className="reader-video-chip" style={{ background: grad(item.cat, 90) }}>▶ Video</span>}
           </div>
           <h2 id="reader-title" dir="auto">{item.title}</h2>
-          <Media item={item} theme={theme} active />
-          {playable && <p className="reader-kicker-label">What happens in the clip</p>}
-          <p className="reader-read" dir="auto">{item.read || item.note}</p>
+          <Media item={item} theme={theme} active skipPhoto={/<img[\s>]/i.test(articleHtml)} />
+          {isPlace && <PlacePanel item={item} />}
+          {isApp && <AppPanel item={item} />}
+          {byline && <p className="byline" dir="auto">{byline}</p>}
+          {articleHtml ? (
+            <>
+              <p className="reader-read lede" dir="auto">{item.note}</p>
+              <div className="article" dir="auto" dangerouslySetInnerHTML={{ __html: articleHtml }} />
+            </>
+          ) : paragraphs.length > 0 ? (
+            <div className="article" dir="auto">
+              {paragraphs.map((paragraph, index) => <p key={index} dir="auto">{paragraph}</p>)}
+            </div>
+          ) : (
+            <>
+              {playable && <p className="reader-kicker-label">What happens in the clip</p>}
+              <p className="reader-read" dir="auto">{item.read || item.note}</p>
+            </>
+          )}
           {item.facts && item.facts.length > 0 && (
             <dl className="facts">
               {item.facts.map((fact, index) => (
@@ -218,6 +309,8 @@ export function Reader({
         <div className="reader-foot">
           <button type="button" className="ghost-btn" aria-label="Previous item" onClick={() => onStep(-1)}>‹ Prev</button>
           <button type="button" className="ghost-btn" aria-label="Next item" onClick={() => onStep(1)}>Next ›</button>
+          <button type="button" className={`ghost-btn ${saved ? "is-saved" : ""}`} aria-pressed={saved} onClick={onToggleSave}>{saved ? "★ Saved" : "☆ Save"}</button>
+          <button type="button" className="ghost-btn" onClick={onShare}>Share</button>
           <span className="kbd-hint">← → · Esc</span>
           <span className="reader-spacer" />
           {original && (

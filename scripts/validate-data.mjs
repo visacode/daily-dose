@@ -25,6 +25,58 @@ function readJson(file) {
   }
 }
 
+function httpUrl(value) {
+  return typeof value === "string" && /^https?:\/\//.test(value);
+}
+
+function checkStringList(where, value) {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) fail(`${where} must be an array of strings`);
+}
+
+function checkArticle(where, article) {
+  if (!article || typeof article !== "object") {
+    fail(`${where} must be an object`);
+    return;
+  }
+  if (article.html !== undefined && typeof article.html !== "string") fail(`${where}.html must be a string`);
+  if (article.paragraphs !== undefined) checkStringList(`${where}.paragraphs`, article.paragraphs);
+  for (const key of ["byline", "published", "siteName"]) {
+    if (article[key] !== undefined && typeof article[key] !== "string") fail(`${where}.${key} must be a string`);
+  }
+}
+
+function checkPlace(where, place) {
+  if (!place || typeof place !== "object") {
+    fail(`${where} must be an object`);
+    return;
+  }
+  for (const key of ["hours", "price", "area", "phone", "rating"]) {
+    if (place[key] !== undefined && typeof place[key] !== "string") fail(`${where}.${key} must be a string`);
+  }
+  if (place.photos !== undefined) {
+    checkStringList(`${where}.photos`, place.photos);
+    if (Array.isArray(place.photos) && place.photos.some((entry) => !httpUrl(entry))) fail(`${where}.photos must be http(s) URLs`);
+  }
+}
+
+function checkApp(where, app) {
+  if (!app || typeof app !== "object") {
+    fail(`${where} must be an object`);
+    return;
+  }
+  for (const key of ["rating", "price"]) {
+    if (app[key] !== undefined && typeof app[key] !== "string") fail(`${where}.${key} must be a string`);
+  }
+  for (const key of ["icon", "appStore", "playStore"]) {
+    if (app[key] !== undefined && !httpUrl(app[key])) fail(`${where}.${key} must be an http(s) URL`);
+  }
+  if (app.platforms !== undefined) checkStringList(`${where}.platforms`, app.platforms);
+  if (app.screenshots !== undefined) {
+    checkStringList(`${where}.screenshots`, app.screenshots);
+    if (Array.isArray(app.screenshots) && app.screenshots.some((entry) => !httpUrl(entry))) fail(`${where}.screenshots must be http(s) URLs`);
+  }
+}
+
 function checkEdition(file, data) {
   if (!data || typeof data !== "object") return;
   if (!DATE.test(data.date || "")) fail(`${file}: date must be YYYY-MM-DD`);
@@ -55,6 +107,15 @@ function checkEdition(file, data) {
       fail(`${where}.embed must be youtube, x, tiktok, instagram, image, map, or none`);
     }
     if (item.mapQuery !== undefined && typeof item.mapQuery !== "string") fail(`${where}.mapQuery must be a string`);
+    if (item.favicon !== undefined && (typeof item.favicon !== "string" || !/^https?:\/\//.test(item.favicon))) {
+      fail(`${where}.favicon must be an http(s) URL`);
+    }
+    if (item.videoStyle !== undefined && item.videoStyle !== "short" && item.videoStyle !== "wide") {
+      fail(`${where}.videoStyle must be short or wide`);
+    }
+    if (item.article !== undefined) checkArticle(`${where}.article`, item.article);
+    if (item.place !== undefined) checkPlace(`${where}.place`, item.place);
+    if (item.app !== undefined) checkApp(`${where}.app`, item.app);
     if (item.facts !== undefined) {
       if (!Array.isArray(item.facts)) fail(`${where}.facts must be an array of [label, value]`);
       else {

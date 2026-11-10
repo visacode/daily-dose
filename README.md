@@ -66,6 +66,33 @@ Bots ship a day by committing JSON only. Write these three files together so the
 | `video` | no | Direct file URL (`mp4`, `webm`). Played in a video element. |
 | `embed` | no | `youtube`, `x`, `tiktok`, `instagram`, `image`, `map`, or `none` |
 | `mapQuery` | no | Google Maps search text. No API key. |
+| `favicon` | no | Site icon URL. |
+| `videoStyle` | no | `short` or `wide`. Shorts, TikTok, and clips under 75 seconds are vertical when this is omitted. |
+| `article` | no | `{ html, paragraphs, byline, published, siteName }`. Full page in the reader. |
+| `place` | no | `{ hours, price, area, phone, photos, rating }`. Hours, phone, address, and price facts fill the gaps. |
+| `app` | no | `{ icon, screenshots, rating, price, platforms, appStore, playStore }`. Platform and price facts fill the gaps. |
+
+Every new field is optional. A day file that only has the original fields still validates and still renders.
+
+### Articles, places, and apps
+
+`scripts/enrich-articles.mjs` fetches each `href` that is not YouTube, X, TikTok, Instagram, or a Maps link. It stores readable HTML (scripts and styles removed), plain paragraphs, byline, published time, site name, `og:image`, and favicon. On app pages it also keeps the first App Store and Google Play links it finds. If a field already has a value, the script does not replace it. If a site blocks the fetch, the item keeps its summary.
+
+The **Enrich articles** workflow runs that script on pushes to `public/data/**`, every day at 06:00 UTC (09:00 in Riyadh), and on demand. **Deploy to GitHub Pages** runs the same script before the build, so the live site gets the text on the data push itself.
+
+In the reader, a place shows its map, photo gallery, hours, price, area, a tap-to-call phone link, and Directions (Google Maps and Apple Maps). An app shows its icon, screenshot carousel, rating, price, platforms, and store buttons when those URLs exist.
+
+### Watch, saved, and archive
+
+**Watch** is a full-screen vertical feed of the day's YouTube, X, TikTok, Instagram, and direct-video items. YouTube autoplays and advances when the clip ends. Other embeds advance after a short dwell. Mute toggles YouTube and file video. Swipe up or down, or use the arrow keys.
+
+**Saved** is a tab stored in `localStorage` on this device. Seen items dim, unseen ones get a New badge after the first one is opened, and the hero shows "x of y seen" plus a daily streak in Asia/Riyadh. **Share** uses the Web Share API, or copies the link.
+
+**This day / All days** next to search loads other `public/data/YYYY-MM-DD.json` files only after you ask, then searches them with the current tab.
+
+### Install
+
+`manifest.webmanifest` and the generated `sw.js` use scope `/daily-dose/`. The service worker caches the built shell and, after you open them, the day JSON files, so a recent edition can be reread offline. Add it to the home screen from the browser share sheet.
 
 ### How media is chosen
 

@@ -22,7 +22,20 @@ export function filterItems(items: Item[], tab: TabId, query: string, seed: numb
   const matched = items.filter((item) => {
     if (!cats.has(item.cat)) return false;
     if (!needle) return true;
-    const hay = `${item.title} ${item.note} ${item.tag} ${item.source} ${item.read ?? ""}`.toLowerCase();
+    const hay = [
+      item.title,
+      item.note,
+      item.tag,
+      item.source,
+      item.read ?? "",
+      item.article?.byline ?? "",
+      item.article?.siteName ?? "",
+      ...(item.article?.paragraphs ?? []),
+      item.place?.area ?? "",
+      item.place?.hours ?? "",
+      item.app?.price ?? "",
+      ...(item.app?.platforms ?? []),
+    ].join(" ").toLowerCase();
     return hay.includes(needle);
   });
   return shuffleItems(matched, seed);

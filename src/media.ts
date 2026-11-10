@@ -77,15 +77,38 @@ export function inferEmbed(item: Item): EmbedKind {
   return "none";
 }
 
-export function youtubeEmbedUrl(item: Item): string | null {
+export function youtubeEmbedUrl(item: Item, options?: { autoplay?: boolean; mute?: boolean }): string | null {
   const id = youtubeId(item.href) || (item.video ? youtubeId(item.video) : null);
   if (!id) return null;
-  const params = new URLSearchParams({ rel: "0", modestbranding: "1" });
+  const params = new URLSearchParams({ rel: "0", modestbranding: "1", playsinline: "1" });
+  if (options?.autoplay) {
+    params.set("autoplay", "1");
+    params.set("enablejsapi", "1");
+  }
+  if (options?.mute) params.set("mute", "1");
   return `https://www.youtube.com/embed/${id}?${params.toString()}`;
 }
 
 export function isYoutubeShort(item: Item): boolean {
   return /youtube\.com\/shorts\//.test(item.href) || /youtube\.com\/shorts\//.test(item.video ?? "");
+}
+
+export function isVerticalVideo(item: Item): boolean {
+  if (item.videoStyle === "short") return true;
+  if (item.videoStyle === "wide") return false;
+  if (isYoutubeShort(item)) return true;
+  const kind = inferEmbed(item);
+  if (kind === "tiktok") return true;
+  if (kind === "instagram" && /\/reel\//.test(item.href)) return true;
+  const length = item.facts?.find(([label]) => /length|duration/i.test(label))?.[1] ?? "";
+  const seconds = length.match(/(\d+)\s*seconds?/i);
+  if (seconds && Number(seconds[1]) > 0 && Number(seconds[1]) <= 75) return true;
+  return false;
+}
+
+export function isWatchItem(item: Item): boolean {
+  const kind = inferEmbed(item);
+  return kind === "youtube" || kind === "x" || kind === "tiktok" || kind === "instagram" || Boolean(directVideoUrl(item));
 }
 
 export function mapQueryFor(item: Item): string {
