@@ -5,6 +5,7 @@ import { appDetails, directionsLinks, placeDetails, telHref } from "../details";
 import { FadeImg } from "./FadeImg";
 import { grad, META } from "../meta";
 import {
+  cardThumb,
   directVideoUrl,
   ensureTwitter,
   inferEmbed,
@@ -225,8 +226,7 @@ export function Reader({
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!sheet) return;
-    if ((event.target as HTMLElement).closest("button")) return;
+    if ((event.target as HTMLElement).closest("button, a")) return;
     startY.current = event.clientY;
     setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -237,45 +237,31 @@ export function Reader({
     setDrag(Math.max(0, event.clientY - startY.current));
   };
 
-  const transform = sheet
-    ? open
-      ? `translateY(${dragY}px)`
-      : "translateY(105%)"
-    : open
-      ? "translateX(0)"
-      : "translateX(105%)";
+  const transform = open ? `translate3d(0, ${dragY}px, 0)` : "translate3d(0, 12%, 0) scale(0.96)";
+  const thumb = cardThumb(item);
+  const onScroll = () => {
+    const top = bodyRef.current?.scrollTop ?? 0;
+    const hero = bodyRef.current?.querySelector<HTMLElement>(".detail-hero");
+    if (hero) hero.style.transform = `translate3d(0, ${Math.min(top, 240) * 0.35}px, 0)`;
+  };
 
   return (
-    <div className={`reader-root ${open ? "is-open" : ""}`}>
-      <div className="reader-backdrop" onClick={onClose} />
-      <div
-        ref={panelRef}
-        className={`reader-panel ${sheet ? "is-sheet" : "is-side"} ${dragging ? "is-dragging" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reader-title"
-        tabIndex={-1}
-        style={{ transform }}
-      >
-        <div className="reader-head" style={{ background: grad(item.cat) }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
-          {sheet && <div className="reader-handle" />}
-          <div className="reader-kicker">
-            <span className="reader-emoji" aria-hidden="true">{meta.icon}</span>
-            <span>
-              <span className="reader-cat">{meta.label}</span>
-              <span className="reader-pos">{position + 1} of {list.length} · {meta.bot}</span>
-            </span>
+    <div className={`detail ${open ? "is-open" : ""} ${sheet ? "is-phone" : ""} ${dragging ? "is-dragging" : ""}`} role="dialog" aria-modal="true" aria-labelledby="reader-title" ref={panelRef} tabIndex={-1} style={{ transform }}>
+      <button type="button" className="detail-back" aria-label="Back" onClick={onClose}>‹</button>
+        <div ref={bodyRef} className="detail-scroll" onScroll={onScroll}>
+          <div className="detail-hero" style={{ background: grad(item.cat) }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
+            {thumb && <img src={thumb} alt="" style={{ viewTransitionName: "dose-media" }} />}
+            <div className="detail-hero-copy">
+              <span>{meta.label} · {position + 1} of {list.length}</span>
+              <h2 id="reader-title" dir="auto">{item.title}</h2>
+            </div>
           </div>
-          <button type="button" className="reader-close" aria-label="Close" onClick={onClose} onPointerDown={(event) => event.stopPropagation()}>✕</button>
-        </div>
-        <div ref={bodyRef} className="reader-body">
+          <div className="detail-copy">
           <div className="reader-chips">
             {item.favicon && <img className="favicon" src={item.favicon} alt="" />}
             <span>{item.source}</span>
             <span>{item.tag}</span>
-            {playable && <span className="reader-video-chip" style={{ background: grad(item.cat, 90) }}>▶ Video</span>}
           </div>
-          <h2 id="reader-title" dir="auto">{item.title}</h2>
           <Media item={item} theme={theme} active skipPhoto={/<img[\s>]/i.test(articleHtml)} />
           {isPlace && <PlacePanel item={item} />}
           {isApp && <AppPanel item={item} />}
@@ -305,21 +291,15 @@ export function Reader({
               ))}
             </dl>
           )}
+          </div>
         </div>
-        <div className="reader-foot">
-          <button type="button" className="ghost-btn" aria-label="Previous item" onClick={() => onStep(-1)}>‹ Prev</button>
-          <button type="button" className="ghost-btn" aria-label="Next item" onClick={() => onStep(1)}>Next ›</button>
-          <button type="button" className={`ghost-btn ${saved ? "is-saved" : ""}`} aria-pressed={saved} onClick={onToggleSave}>{saved ? "★ Saved" : "☆ Save"}</button>
-          <button type="button" className="ghost-btn" onClick={onShare}>Share</button>
-          <span className="kbd-hint">← → · Esc</span>
-          <span className="reader-spacer" />
-          {original && (
-            <a className="open-original" style={{ background: grad(item.cat, 90) }} href={original} target="_blank" rel="noopener noreferrer">
-              Open original <span aria-hidden="true">↗</span>
-            </a>
-          )}
+        <div className="detail-bar">
+          <button type="button" aria-label="Previous" onClick={() => onStep(-1)}>‹</button>
+          <button type="button" aria-pressed={saved} onClick={onToggleSave}>{saved ? "Saved" : "Save"}</button>
+          <button type="button" onClick={onShare}>Share</button>
+          {original && <a href={original} target="_blank" rel="noopener noreferrer">Open original</a>}
+          <button type="button" aria-label="Next" onClick={() => onStep(1)}>›</button>
         </div>
-      </div>
     </div>
   );
 }
