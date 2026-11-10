@@ -7,8 +7,9 @@
       name="description"
       content="Daily Dose is a daily news magazine from Riyadh: memes, places, things, and hidden gems, read on the page."
     />
-    <meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4efe6" />
     <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -19,8 +20,17 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <script>
       try {
-        var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        var themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var applyTheme = function () {
+          var dark = themeQuery.matches;
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+          var color = dark ? "#141311" : "#f4efe6";
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+            if (!meta.media) meta.content = color;
+          });
+        };
+        applyTheme();
+        themeQuery.addEventListener("change", applyTheme);
       } catch (e) {
         document.documentElement.dataset.theme = "light";
       }
@@ -31,11 +41,13 @@
         margin: 0;
         background: #f4efe6;
         color: #1b1714;
+        color-scheme: light;
       }
       html[data-theme="dark"],
       html[data-theme="dark"] body {
         background: #141311;
         color: #f3eee6;
+        color-scheme: dark;
       }
     </style>
   </head>
