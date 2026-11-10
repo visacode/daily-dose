@@ -65,3 +65,44 @@ export function coverStory(items: Item[]): Item | undefined {
 export function without(items: Item[], used: Set<string>): Item[] {
   return items.filter((item) => !used.has(item.href));
 }
+
+export function greeting(hour: number): string {
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
+
+export function issueMinutes(items: Item[]): number {
+  return items.reduce((sum, item) => sum + readMinutes(item), 0);
+}
+
+const SECTION_ORDER: Cat[] = ["memes", "places", "things", "gemPlaces", "gemApps"];
+
+export function sectionCounts(items: Item[]): { cat: Cat; label: string; count: number }[] {
+  return SECTION_ORDER.map((cat) => ({
+    cat,
+    label: META[cat].short,
+    count: items.filter((item) => item.cat === cat).length,
+  })).filter((entry) => entry.count > 0);
+}
+
+export function quoteOfDay(items: Item[], date: string): { text: string; source: string; word: string } | null {
+  const choices = items.flatMap((item) => {
+    const text = pullQuote(item) ?? (item.note.trim().length > 70 ? item.note.trim() : null);
+    const tag = item.tag.trim();
+    return text ? [{ text, source: item.source, word: tag.length <= 32 ? tag : "" }] : [];
+  });
+  if (!choices.length) return null;
+  const seed = date.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return choices[seed % choices.length];
+}
+
+export function storyHrefFromPath(pathname: string): string | null {
+  const hashPath = window.location.hash.replace(/^#/, "").split("?")[0];
+  const path = hashPath.startsWith("/story/") ? hashPath : pathname;
+  if (!path.startsWith("/story/")) return null;
+  const raw = path.slice("/story/".length);
+  try { return decodeURIComponent(raw); } catch { return raw; }
+}

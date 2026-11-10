@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDose } from "../dose";
 import { appDetails, placeDetails } from "../details";
-import { coverStory, issueNo, kickerLabel, pullQuote, readMinutes, sectionPath, storyPath, without } from "../magazine";
+import { useRiyadhNow } from "../hooks";
+import { coverStory, greeting, issueMinutes, issueNo, kickerLabel, quoteOfDay, readMinutes, sectionCounts, sectionPath, storyPath, without } from "../magazine";
 import { cardThumb, isWatchItem } from "../media";
 import type { Cat, Item } from "../types";
-import { Kicker, MetaLine, Photo, TitleLink } from "./pieces";
+import { Kicker, MetaLine, Photo, Reveal, TitleLink } from "./pieces";
 
 function Lead({ item }: { item: Item }) {
   return (
+    <Reveal>
     <article className="lead">
       <Photo item={item} kind="wide" />
       <Kicker item={item} />
@@ -16,11 +18,13 @@ function Lead({ item }: { item: Item }) {
       <p className="standfirst" dir="auto">{item.note}</p>
       <MetaLine item={item} />
     </article>
+    </Reveal>
   );
 }
 
 function Secondary({ item }: { item: Item }) {
   return (
+    <Reveal>
     <article className="secondary">
       <Photo item={item} kind="square" />
       <div>
@@ -29,40 +33,47 @@ function Secondary({ item }: { item: Item }) {
         <MetaLine item={item} />
       </div>
     </article>
+    </Reveal>
   );
 }
 
 export function MemeCard({ item }: { item: Item }) {
   return (
+    <Reveal>
     <article className="meme-card">
       <Photo item={item} kind="wide" />
       <Kicker item={item} />
       <h3><TitleLink item={item} /></h3>
       <p dir="auto">{item.note}</p>
     </article>
+    </Reveal>
   );
 }
 
 export function PlaceCard({ item }: { item: Item }) {
   const place = placeDetails(item);
   return (
+    <Reveal>
     <article className="place-card">
       <Photo item={item} kind="wide" />
       <Kicker item={item} />
       <h3><TitleLink item={item} /></h3>
       <p className="meta">{[place.area, place.price].filter(Boolean).join(" · ") || item.tag}</p>
     </article>
+    </Reveal>
   );
 }
 
 export function Brief({ item }: { item: Item }) {
   return (
+    <Reveal>
     <article className="brief">
       <Kicker item={item} />
       <h3><TitleLink item={item} /></h3>
       <p dir="auto">{item.note}</p>
       <MetaLine item={item} />
     </article>
+    </Reveal>
   );
 }
 
@@ -70,6 +81,7 @@ export function AppRow({ item }: { item: Item }) {
   const app = appDetails(item);
   const letter = item.title.trim().charAt(0).toUpperCase();
   return (
+    <Reveal>
     <article className="app-row">
       {app.icon ? <img className="app-icon" src={app.icon} alt="" width={48} height={48} loading="lazy" decoding="async" /> : <span className="app-mark" aria-hidden="true">{letter}</span>}
       <div>
@@ -78,6 +90,7 @@ export function AppRow({ item }: { item: Item }) {
       </div>
       <p className="meta">{app.price || app.rating || item.tag}</p>
     </article>
+    </Reveal>
   );
 }
 
@@ -97,6 +110,8 @@ function SectionBlock({ cat, items, href, children }: { cat: Cat | "gems"; items
 
 export function Front() {
   const { edition, index } = useDose();
+  const now = useRiyadhNow();
+  const navigate = useNavigate();
   if (!edition || !index) return null;
   const items = edition.items;
   const cover = coverStory(items);
@@ -111,13 +126,43 @@ export function Front() {
   const left = without(items, used);
   const of = (cat: Cat) => left.filter((item) => item.cat === cat);
   const watch = items.filter(isWatchItem).filter((item) => item.href !== cover?.href).slice(0, 8);
-  const quoteItem = items.find((item) => item.cat === "gemPlaces" && item.note.length > 80) ?? items.find((item) => pullQuote(item));
-  const quote = quoteItem ? pullQuote(quoteItem) ?? quoteItem.note : null;
+  const daily = quoteOfDay(items, edition.date);
+  const counts = sectionCounts(items);
+  const minutes = issueMinutes(items);
   const path = (section: string) => sectionPath(edition.date, index.latest, section);
+  const surprise = () => {
+    const pick = items[Math.floor(Math.random() * items.length)];
+    if (pick) navigate(storyPath(pick));
+  };
 
   return (
     <>
+      <section className="dose-card">
+        <div>
+          <p className="kicker">Today's Dose</p>
+          <h2>No. {issueNo(index, edition.date)}</h2>
+          <p className="meta">{edition.updated} · Riyadh</p>
+          <p className="dek">{greeting(now.hour)}</p>
+          <p className="meta">{minutes}-minute read for the whole issue</p>
+        </div>
+        <button type="button" className="text-btn" onClick={surprise}>Surprise me</button>
+      </section>
+      <section className="numbers" aria-label="By the numbers">
+        <div><strong>{items.length}</strong><span>Stories</span></div>
+        <div><strong>{minutes}</strong><span>Minutes</span></div>
+        {counts.map((entry) => (
+          <div key={entry.cat}><strong>{entry.count}</strong><span>{entry.label}</span></div>
+        ))}
+      </section>
+      {daily && (
+        <blockquote className="pull daily-quote">
+          <p className="kicker">Quote{daily.word ? ` · ${daily.word}` : ""}</p>
+          <p dir="auto">{daily.text}</p>
+          <footer>{daily.source}</footer>
+        </blockquote>
+      )}
       {cover && (
+        <Reveal>
         <Link className="cover" to={storyPath(cover)}>
           <Photo item={cover} kind="tall" eager />
           <div className="cover-copy">
@@ -127,6 +172,7 @@ export function Front() {
             <p className="meta">{cover.source} · {cover.tag} · {readMinutes(cover)} min read</p>
           </div>
         </Link>
+        </Reveal>
       )}
       <div className="spread">
         <div className="spread-main">
@@ -169,12 +215,6 @@ export function Front() {
                 ))}
               </ol>
             </section>
-          )}
-          {quote && quoteItem && (
-            <blockquote className="pull">
-              <p dir="auto">{quote}</p>
-              <footer>{quoteItem.source}</footer>
-            </blockquote>
           )}
           <SectionBlock cat="memes" items={of("memes")} href={path("memes")}>
             <div className="meme-grid">{of("memes").map((item) => <MemeCard key={item.href} item={item} />)}</div>

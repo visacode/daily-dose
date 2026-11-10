@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { loadEdition, loadInitial, requestedDay } from "./data";
-import { safeHttpUrl } from "./media";
 import { usePersonal } from "./personal";
+import { shareItem } from "./share";
 import { filterItems } from "./select";
 import type { DayIndex, Edition, Item } from "./types";
 
@@ -109,20 +109,11 @@ export function DoseProvider({ children }: { children: ReactNode }) {
   }, [edition, index]);
 
   const share = useCallback(async (item: Item) => {
-    const url = safeHttpUrl(item.href) ?? item.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: item.title, text: item.note, url });
-      } catch {
-        /* dismissed */
-      }
-      return;
-    }
     try {
-      await navigator.clipboard.writeText(url);
-      setToast("Link copied");
+      const result = await shareItem(item);
+      if (result === "copied") setToast("Link copied");
     } catch {
-      setToast(url);
+      /* dismissed */
     }
   }, []);
 

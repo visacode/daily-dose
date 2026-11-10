@@ -1,7 +1,8 @@
-import { useEffect } from "react";
-import { NavLink, Outlet, useLocation, useParams } from "react-router-dom";
+import { useEffect, useState, type CSSProperties } from "react";
+import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDose } from "../dose";
-import { issueNo, sectionPath, topPath } from "../magazine";
+import { issueNo, sectionPath, storyHrefFromPath, storyPath, topPath } from "../magazine";
+import { Mark } from "./pieces";
 import { ScrollMemory } from "./ScrollMemory";
 
 const LINKS = [
@@ -28,8 +29,64 @@ function usePaperTheme() {
 export function Shell() {
   const dose = useDose();
   const location = useLocation();
+  const navigate = useNavigate();
   const { date } = useParams();
+  const onStory = location.pathname.startsWith("/story/");
+  const [progress, setProgress] = useState(0);
   usePaperTheme();
+
+  useEffect(() => {
+    if (!onStory) {
+      setProgress(0);
+      return;
+    }
+    const measure = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0);
+    };
+    measure();
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [onStory, location.pathname]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const typing = Boolean(target?.closest("input, textarea, [contenteditable='true']"));
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        if (location.pathname === "/search") document.getElementById("issue-search")?.focus();
+        else navigate("/search");
+        return;
+      }
+      if (typing || !dose.edition) return;
+      const items = dose.edition.items;
+      const href = storyHrefFromPath(location.pathname);
+      const at = href ? items.findIndex((item) => item.href === href) : -1;
+      if (event.key === "j") {
+        const next = at >= 0 ? items[at + 1] : items[0];
+        event.preventDefault();
+        if (next) navigate(storyPath(next));
+        else navigate("/finished");
+      } else if (event.key === "k" && at > 0) {
+        event.preventDefault();
+        navigate(storyPath(items[at - 1]));
+      } else if ((event.key === "s" || event.key === "S") && at >= 0) {
+        event.preventDefault();
+        const item = items[at];
+        const saved = dose.personal.isSaved(item.href);
+        dose.personal.toggleSave(item, dose.edition.date);
+        dose.setToast(saved ? "Removed from saved" : "Saved");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dose, location.pathname, navigate]);
 
   useEffect(() => {
     if (!dose.index || !dose.edition || dose.loading) return;
@@ -52,7 +109,7 @@ export function Shell() {
       <header className="masthead">
         <div className="wrap masthead-top">
           <div>
-            <p className="wordmark"><NavLink to={home} end>Daily Dose</NavLink></p>
+            <p className="wordmark"><NavLink to={home} end><Mark />Daily Dose</NavLink></p>
             <p className="dateline">{edition?.updated ?? "Today"} · Riyadh</p>
           </div>
           <p className="issue-no">{index && edition ? `No. ${issueNo(index, edition.date)}` : "Riyadh"}</p>
@@ -73,6 +130,7 @@ export function Shell() {
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.6" /><path d="M15.2 15.2 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
           </NavLink>
         </div>
+        {onStory && <span className="read-progress" style={{ "--p": String(progress) } as CSSProperties} />}
       </nav>
       <main className={`wrap page ${dose.pending ? "is-pending" : ""}`}>
         {dose.loading && !edition && <p className="status">Setting the type…</p>}
