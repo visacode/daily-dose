@@ -1,3 +1,13 @@
+:root {
+  --ion-font-family: "Outfit Variable", Outfit, "Segoe UI", "Noto Naskh Arabic", sans-serif;
+  --ion-color-primary: #ff3d7f;
+  --ion-color-primary-rgb: 255, 61, 127;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #e03670;
+  --ion-color-primary-tint: #ff508c;
+}
+
 :root,
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -358,6 +368,14 @@ img { max-width: 100%; }
   font-size: 14px;
 }
 .detail-bar a { margin-left: auto; background: var(--text); color: var(--bg); }
+.reader-flow { min-height: 100%; background: var(--ion-background-color, var(--bg)); color: var(--ion-text-color, var(--text)); }
+.reader-flow .detail-bar { position: sticky; bottom: 0; }
+.reader-flow .detail-hero { height: 46vh; }
+.quick-sheet h2 { margin: 8px 0; letter-spacing: -0.03em; }
+.quick-kicker { margin: 0; color: var(--ion-color-medium, #8e8e93); font-size: 13px; }
+.quick-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick-actions button { border: 0; border-radius: 999px; padding: 10px 14px; background: var(--ion-color-step-100, #1c1c1e); color: inherit; font-weight: 700; }
+ion-content.watch-content { --overflow: hidden; }
 
 .reader-chips { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .reader-chips span, .favicon { background: var(--fill); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 650; color: var(--text-2); }
