@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visacode.github.io/daily-dose/data/schema.json",
+  "title": "Daily Dose edition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["date", "updated", "items"],
+  "properties": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Edition date, Asia/Riyadh calendar day."
+    },
+    "updated": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human label shown in the hero, e.g. Tue 10 Nov 2026."
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["cat", "title", "note", "source", "href", "tag"],
+      "properties": {
+        "cat": {
+          "enum": ["memes", "places", "things", "gemPlaces", "gemApps"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "note": { "type": "string", "minLength": 1, "description": "Short card blurb." },
+        "source": { "type": "string", "minLength": 1, "description": "Outlet name shown on the card." },
+        "href": { "type": "string", "format": "uri", "description": "Canonical URL. Open original goes here." },
+        "tag": { "type": "string", "minLength": 1 },
+        "read": { "type": "string", "description": "Reader body. Falls back to note when omitted." },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [{ "type": "string" }, { "type": "string" }],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "image": { "type": "string", "description": "Photo or og:image URL. Shown on the card and in the reader." },
+        "video": { "type": "string", "description": "Direct video file URL (mp4, webm). YouTube URLs should use href + embed instead." },
+        "embed": {
+          "enum": ["youtube", "x", "tiktok", "instagram", "image", "map", "none"],
+          "description": "Optional. When omitted, Daily Dose infers it from href and cat."
+        },
+        "mapQuery": {
+          "type": "string",
+          "description": "Optional Google Maps search text. Used when embed is map, or for places and gemPlaces."
+        }
+      }
+    }
+  }
+}
