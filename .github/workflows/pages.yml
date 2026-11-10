@@ -31,6 +31,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Enrich articles into this deploy
+        run: node scripts/enrich-articles.mjs
+
       - name: Validate daily data
         run: npm run validate
 

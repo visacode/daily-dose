@@ -1,0 +1,60 @@
+# Fetches readable article text, preview images, and favicons into the day JSON.
+# Bot-written fields are left in place. A second run is a no-op, so the commit
+# does not keep retriggering this workflow.
+# A push made with the default token does not start Deploy to GitHub Pages.
+# That workflow runs this same script before it builds, so the live site still
+# gets the article text on the data push itself.
+
+name: Enrich articles
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/data/**"
+      - "scripts/enrich-articles.mjs"
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Edition date YYYY-MM-DD. Leave empty to enrich every day in the index."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Enrich
+        run: node scripts/enrich-articles.mjs "${{ inputs.date }}"
+
+      - name: Validate
+        run: npm run validate
+
+      - name: Commit enriched JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          if git diff --staged --quiet; then
+            echo "No article changes"
+            exit 0
+          fi
+          git commit -m "data: enrich articles and previews"
+          git push
