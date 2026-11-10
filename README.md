@@ -8,7 +8,7 @@ Personal daily-discovery dashboard. Three bots fill it each morning:
 
 Video, posts, and maps play on the page. **Open original** is the link that leaves the site.
 
-The interface is a full-height app. Today, Watch, Explore, and Saved sit in a bottom tab bar on a phone and in a side rail on a wide screen.
+The interface is an Ionic app. Today, Watch, Explore, and Saved are tabs. Routes use the URL hash (`/#/tabs/today`) so they keep working on GitHub Pages under `/daily-dose/`.
 
 Live site: <https://visacode.github.io/daily-dose/>
 

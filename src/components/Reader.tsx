@@ -172,6 +172,7 @@ export function Reader({
   sheet,
   theme,
   saved,
+  pageMode = false,
   onClose,
   onStep,
   onToggleSave,
@@ -183,6 +184,7 @@ export function Reader({
   sheet: boolean;
   theme: ThemeName;
   saved: boolean;
+  pageMode?: boolean;
   onClose: () => void;
   onStep: (delta: number) => void;
   onToggleSave: () => void;
@@ -246,8 +248,8 @@ export function Reader({
   };
 
   return (
-    <div className={`detail ${open ? "is-open" : ""} ${sheet ? "is-phone" : ""} ${dragging ? "is-dragging" : ""}`} role="dialog" aria-modal="true" aria-labelledby="reader-title" ref={panelRef} tabIndex={-1} style={{ transform }}>
-      <button type="button" className="detail-back" aria-label="Back" onClick={onClose}>‹</button>
+    <div className={pageMode ? "reader-flow" : `detail ${open ? "is-open" : ""} ${sheet ? "is-phone" : ""} ${dragging ? "is-dragging" : ""}`} role="dialog" aria-modal={pageMode ? undefined : true} aria-labelledby="reader-title" ref={panelRef} tabIndex={-1} style={pageMode ? undefined : { transform }}>
+      {!pageMode && <button type="button" className="detail-back" aria-label="Back" onClick={onClose}>‹</button>}
         <div ref={bodyRef} className="detail-scroll" onScroll={onScroll}>
           <div className="detail-hero" style={{ background: grad(item.cat) }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
             {thumb && <img src={thumb} alt="" style={{ viewTransitionName: "dose-media" }} />}

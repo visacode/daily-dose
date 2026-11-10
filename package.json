@@ -17,8 +17,13 @@
   },
   "dependencies": {
     "@fontsource-variable/outfit": "^5.3.0",
+    "@ionic/react": "^9.0.10",
+    "@ionic/react-router": "^9.0.10",
+    "ionicons": "^8.1.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router": "^6.30.6",
+    "react-router-dom": "^6.30.6"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",
