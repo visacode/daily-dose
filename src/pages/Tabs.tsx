@@ -1,6 +1,7 @@
 import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from "@ionic/react";
 import { bookmark, home, play, search } from "ionicons/icons";
 import { Navigate, Route } from "react-router-dom";
+import { DetailPage } from "./Detail";
 import { ExplorePage } from "./Explore";
 import { SavedPage } from "./Saved";
 import { TodayPage } from "./Today";
@@ -14,7 +15,9 @@ export function Tabs() {
         <Route path="/tabs/watch" element={<WatchPage />} />
         <Route path="/tabs/explore" element={<ExplorePage />} />
         <Route path="/tabs/saved" element={<SavedPage />} />
+        <Route path="/item/:id" element={<DetailPage />} />
         <Route path="/tabs" element={<Navigate to="/tabs/today" replace />} />
+        <Route path="/" element={<Navigate to="/tabs/today" replace />} />
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
         <IonTabButton tab="today" href="/tabs/today">

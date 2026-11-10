@@ -14,7 +14,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Poster } from "../components/Poster";
 import { itemHrefParam, searchHits, useDose } from "../dose";
-import { META } from "../meta";
 import type { Cat, Item } from "../types";
 
 const FILTERS: { value: "all" | Cat; label: string }[] = [
@@ -82,12 +81,7 @@ export function ExplorePage() {
           <IonTitle>Explore</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Explore</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+      <IonContent>
         <IonSearchbar
           value={query}
           debounce={200}
@@ -120,16 +114,6 @@ export function ExplorePage() {
           ))}
           <button type="button" className={searchAll ? "is-on" : ""} onClick={() => setSearchAll(!searchAll)}>{searchAll ? "All days on" : "All days"}</button>
         </div>
-        {!needle && (
-          <div className="tiles ion-padding">
-            {(["memes", "places", "things", "gemPlaces", "gemApps"] as Cat[]).map((cat) => (
-              <button key={cat} type="button" className={filter === cat ? "is-on" : ""} style={{ background: `linear-gradient(160deg, ${META[cat].a}, ${META[cat].b})` }} onClick={() => setFilter(filter === cat ? "all" : cat)}>
-                <span>{META[cat].icon}</span>
-                <strong>{META[cat].short}</strong>
-              </button>
-            ))}
-          </div>
-        )}
         <div className="result-grid">
           {visible.map((item) => (
             <Poster key={item.href} item={item} seen={seen(item.href)} fresh={personal.seen.length > 0 && !seen(item.href)} onOpen={open} onHold={setQuick} />

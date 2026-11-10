@@ -1,5 +1,4 @@
 import { memo, useEffect, useRef, useState } from "react";
-import type { PointerEvent } from "react";
 import { sanitizeArticleHtml } from "../article";
 import { appDetails, directionsLinks, placeDetails, telHref } from "../details";
 import { FadeImg } from "./FadeImg";
@@ -14,7 +13,6 @@ import {
   isVerticalVideo,
   mapEmbedUrl,
   mapQueryFor,
-  safeHttpUrl,
   shouldShowMap,
   tiktokEmbedUrl,
   tweetStatusId,
@@ -168,37 +166,22 @@ function AppPanel({ item }: { item: Item }) {
 export function Reader({
   item,
   list,
-  open,
-  sheet,
   theme,
   saved,
-  pageMode = false,
-  onClose,
-  onStep,
   onToggleSave,
-  onShare,
+  onMore,
 }: {
   item: Item;
   list: Item[];
-  open: boolean;
-  sheet: boolean;
   theme: ThemeName;
   saved: boolean;
-  pageMode?: boolean;
-  onClose: () => void;
-  onStep: (delta: number) => void;
   onToggleSave: () => void;
-  onShare: () => void;
+  onMore: () => void;
 }) {
   const meta = META[item.cat];
   const bodyRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const startY = useRef<number | null>(null);
-  const dragRef = useRef(0);
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
   const position = Math.max(0, list.findIndex((entry) => entry.href === item.href));
-  const original = safeHttpUrl(item.href);
   const playable = isPlayable(item);
   const articleHtml = item.article?.html ? sanitizeArticleHtml(item.article.html) : "";
   const paragraphs = item.article?.paragraphs ?? [];
@@ -208,51 +191,38 @@ export function Reader({
   const isApp = item.cat === "gemApps";
 
   useEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = 0;
-    dragRef.current = 0;
-    setDragY(0);
     panelRef.current?.focus();
+    const host = panelRef.current?.closest("ion-content") as (HTMLElement & { getScrollElement?: () => Promise<HTMLElement> }) | null;
+    let dead = false;
+    let scroller: HTMLElement | null = null;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const hero = panelRef.current?.querySelector<HTMLElement>(".detail-hero");
+        if (hero && scroller) hero.style.transform = `translate3d(0, ${Math.min(scroller.scrollTop, 240) * 0.35}px, 0)`;
+      });
+    };
+    void host?.getScrollElement?.().then((element) => {
+      if (dead) return;
+      scroller = element;
+      element.scrollTop = 0;
+      element.addEventListener("scroll", onScroll, { passive: true });
+    });
+    return () => {
+      dead = true;
+      if (frame) window.cancelAnimationFrame(frame);
+      scroller?.removeEventListener("scroll", onScroll);
+    };
   }, [item.href]);
 
-  const setDrag = (value: number) => {
-    dragRef.current = value;
-    setDragY(value);
-  };
-
-  const endDrag = () => {
-    if (startY.current === null) return;
-    startY.current = null;
-    setDragging(false);
-    if (dragRef.current > 90) onClose();
-    else setDrag(0);
-  };
-
-  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("button, a")) return;
-    startY.current = event.clientY;
-    setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (startY.current === null) return;
-    setDrag(Math.max(0, event.clientY - startY.current));
-  };
-
-  const transform = open ? `translate3d(0, ${dragY}px, 0)` : "translate3d(0, 12%, 0) scale(0.96)";
   const thumb = cardThumb(item);
-  const onScroll = () => {
-    const top = bodyRef.current?.scrollTop ?? 0;
-    const hero = bodyRef.current?.querySelector<HTMLElement>(".detail-hero");
-    if (hero) hero.style.transform = `translate3d(0, ${Math.min(top, 240) * 0.35}px, 0)`;
-  };
-
   return (
-    <div className={pageMode ? "reader-flow" : `detail ${open ? "is-open" : ""} ${sheet ? "is-phone" : ""} ${dragging ? "is-dragging" : ""}`} role="dialog" aria-modal={pageMode ? undefined : true} aria-labelledby="reader-title" ref={panelRef} tabIndex={-1} style={pageMode ? undefined : { transform }}>
-      {!pageMode && <button type="button" className="detail-back" aria-label="Back" onClick={onClose}>‹</button>}
-        <div ref={bodyRef} className="detail-scroll" onScroll={onScroll}>
-          <div className="detail-hero" style={{ background: grad(item.cat) }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
-            {thumb && <img src={thumb} alt="" style={{ viewTransitionName: "dose-media" }} />}
+    <div className="reader-flow" ref={panelRef} tabIndex={-1}>
+        <div ref={bodyRef} className="detail-scroll">
+          <div className="detail-hero" style={{ background: grad(item.cat) }}>
+            {thumb && <img src={thumb} alt="" width={1200} height={800} loading="lazy" decoding="async" />}
             <div className="detail-hero-copy">
               <span>{meta.label} · {position + 1} of {list.length}</span>
               <h2 id="reader-title" dir="auto">{item.title}</h2>
@@ -296,11 +266,8 @@ export function Reader({
           </div>
         </div>
         <div className="detail-bar">
-          <button type="button" aria-label="Previous" onClick={() => onStep(-1)}>‹</button>
           <button type="button" aria-pressed={saved} onClick={onToggleSave}>{saved ? "Saved" : "Save"}</button>
-          <button type="button" onClick={onShare}>Share</button>
-          {original && <a href={original} target="_blank" rel="noopener noreferrer">Open original</a>}
-          <button type="button" aria-label="Next" onClick={() => onStep(1)}>›</button>
+          <button type="button" onClick={onMore}>More</button>
         </div>
     </div>
   );

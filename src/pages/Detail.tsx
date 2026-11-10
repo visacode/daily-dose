@@ -1,4 +1,5 @@
-import { IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react";
+import { IonActionSheet, IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Reader } from "../components/Reader";
 import { useDose } from "../dose";
@@ -12,6 +13,7 @@ export function DetailPage() {
   const href = decodeURIComponent(id ?? "");
   const dose = useDose();
   const item = dose.findItem(href);
+  const [actions, setActions] = useState(false);
   const list = dose.edition?.items ?? (item ? [item] : []);
   if (!item) {
     return (
@@ -33,24 +35,28 @@ export function DetailPage() {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/tabs/today" text="" />
           </IonButtons>
-          <IonTitle>{item.title}</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent>
         <Reader
-          pageMode
           item={item}
           list={list.some((entry) => entry.href === item.href) ? list : [item, ...list]}
-          open
-          sheet
           theme={useSystemTheme()}
           saved={dose.personal.isSaved(item.href)}
-          onClose={() => window.history.back()}
-          onStep={() => undefined}
           onToggleSave={() => dose.personal.toggleSave(item, dose.edition?.date ?? "")}
-          onShare={() => void dose.share(item)}
+          onMore={() => setActions(true)}
         />
       </IonContent>
+      <IonActionSheet
+        isOpen={actions}
+        header={item.title}
+        buttons={[
+          { text: "Share", handler: () => { void dose.share(item); } },
+          { text: "Open original", handler: () => { window.open(item.href, "_blank", "noopener"); } },
+          { text: "Cancel", role: "cancel" },
+        ]}
+        onDidDismiss={() => setActions(false)}
+      />
     </IonPage>
   );
 }

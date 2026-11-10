@@ -1,12 +1,11 @@
-import { IonActionSheet, IonApp, IonContent, IonModal, IonRouterOutlet, IonToast, setupIonicReact } from "@ionic/react";
+import { IonActionSheet, IonApp, IonContent, IonModal, IonToast, setupIonicReact } from "@ionic/react";
 import { IonReactHashRouter } from "@ionic/react-router";
 import { useState } from "react";
-import { Navigate, Route, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DoseProvider, itemHrefParam, useDose } from "./dose";
-import { DetailPage } from "./pages/Detail";
 import { Tabs } from "./pages/Tabs";
 
-setupIonicReact();
+setupIonicReact({ animated: true, swipeBackEnabled: true });
 
 function QuickSheet() {
   const dose = useDose();
@@ -49,11 +48,7 @@ function QuickSheet() {
 function AppRoutes() {
   return (
     <>
-      <IonRouterOutlet>
-        <Route path="/tabs/*" element={<Tabs />} />
-        <Route path="/item/:id" element={<DetailPage />} />
-        <Route path="/" element={<Navigate to="/tabs/today" replace />} />
-      </IonRouterOutlet>
+      <Tabs />
       <QuickSheet />
     </>
   );

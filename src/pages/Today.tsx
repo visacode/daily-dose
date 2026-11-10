@@ -62,15 +62,10 @@ export function TodayPage() {
           <IonTitle>Today</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent>
         <IonRefresher slot="fixed" onIonRefresh={refresh}>
           <IonRefresherContent />
         </IonRefresher>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Today</IonTitle>
-          </IonToolbar>
-        </IonHeader>
         {loading && !edition && (
           <div className="ion-padding">
             <IonSkeletonText animated style={{ width: "46%", height: 18 }} />
