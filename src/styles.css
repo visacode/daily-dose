@@ -70,7 +70,6 @@ img { max-width: 100%; display: block; }
 .masthead-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .wordmark { margin: 0; font-family: var(--serif); font-style: italic; font-weight: 520; font-size: clamp(2.6rem, 7vw, 4.6rem); letter-spacing: -0.035em; line-height: 0.86; }
 .wordmark a { display: inline-flex; align-items: center; gap: 0.18em; text-decoration: none; }
-.mark { width: 0.78em; height: 0.78em; flex: none; }
 .dateline, .issue-no { margin: 8px 0 0; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .issue-no { margin: 0 0 6px; color: var(--ink); }
 .rules { margin-top: 14px; }
