@@ -7,8 +7,9 @@
   --muted: #6f675c;
   --rule: rgba(27, 23, 20, 0.16);
   --rule-strong: #1b1714;
+  --accent: #9c4308;
   --memes: #9c4308;
-  --places: #8a5a22;
+  --places: #6f6410;
   --things: #1c3d66;
   --gems: #1d5c46;
   --gemPlaces: #1d5c46;
@@ -27,8 +28,9 @@ html[data-theme="dark"] {
   --muted: #b3a89a;
   --rule: rgba(243, 238, 230, 0.16);
   --rule-strong: #f3eee6;
+  --accent: #f0913a;
   --memes: #f0913a;
-  --places: #e2b56a;
+  --places: #e3c766;
   --things: #9ec0dc;
   --gems: #8dccb0;
   --gemPlaces: #8dccb0;
@@ -53,7 +55,7 @@ button { cursor: pointer; }
 a { color: inherit; }
 img { max-width: 100%; display: block; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-::selection { background: color-mix(in srgb, var(--memes) 28%, transparent); }
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
 
 .wrap {
   width: min(1120px, calc(100% - 32px));
@@ -91,7 +93,7 @@ img { max-width: 100%; display: block; }
   bottom: -1px;
   height: 2px;
   width: 100%;
-  background: var(--memes);
+  background: var(--accent);
   transform: scaleX(var(--p, 0));
   transform-origin: left center;
   pointer-events: none;
@@ -123,7 +125,7 @@ h3 { margin: 0; font-size: 1.28rem; }
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--memes);
+  color: var(--accent);
 }
 .kicker[data-cat="places"] { color: var(--places); }
 .kicker[data-cat="things"] { color: var(--things); }
@@ -201,7 +203,7 @@ h3 { margin: 0; font-size: 1.28rem; }
 .story .dek { margin-bottom: 16px; }
 .story-byline { margin: 14px 0; }
 .actions { display: flex; gap: 18px; margin-bottom: 22px; }
-.actions button[aria-pressed="true"] { color: var(--memes); }
+.actions button[aria-pressed="true"] { color: var(--accent); }
 .story-grid { display: grid; gap: 28px; align-items: start; }
 .story-grid:not(:has(aside)) { max-width: 65ch; }
 .prose { font-family: var(--serif); font-size: 1.2rem; line-height: 1.65; max-width: 65ch; color: var(--ink-soft); }
