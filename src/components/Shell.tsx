@@ -102,6 +102,10 @@ export function Shell() {
   const latest = index?.latest ?? edition?.date ?? "";
   const current = edition?.date ?? latest;
   const home = current && latest ? topPath(current, latest) : "/";
+  const ordered = index ? [...index.days].sort((a, b) => a.date.localeCompare(b.date)) : [];
+  const place = ordered.findIndex((day) => day.date === current);
+  const older = place > 0 ? ordered[place - 1] : null;
+  const newer = place >= 0 && place < ordered.length - 1 ? ordered[place + 1] : null;
 
   return (
     <>
@@ -114,6 +118,13 @@ export function Shell() {
           </div>
           <p className="issue-no">{index && edition ? `No. ${issueNo(index, edition.date)}` : "Riyadh"}</p>
         </div>
+        {ordered.length > 1 && (
+          <nav className="wrap day-nav" aria-label="Editions">
+            {older ? <NavLink to={topPath(older.date, latest)}>← {older.updated}</NavLink> : <span />}
+            <NavLink to="/archive">All editions</NavLink>
+            {newer ? <NavLink to={topPath(newer.date, latest)}>{newer.updated} →</NavLink> : <span />}
+          </nav>
+        )}
         <div className="rules" aria-hidden="true"><span /><span /></div>
       </header>
       <nav className="nav" aria-label="Sections">
