@@ -7,7 +7,7 @@
   --muted: #6f675c;
   --rule: rgba(27, 23, 20, 0.16);
   --rule-strong: #1b1714;
-  --accent: #9c4308;
+  --accent: #1f4e8c;
   --memes: var(--accent);
   --places: var(--accent);
   --things: var(--accent);
@@ -28,7 +28,7 @@ html[data-theme="dark"] {
   --muted: #b3a89a;
   --rule: rgba(243, 238, 230, 0.16);
   --rule-strong: #f3eee6;
-  --accent: #f0913a;
+  --accent: #8fbcec;
   --memes: var(--accent);
   --places: var(--accent);
   --things: var(--accent);
