@@ -7,7 +7,7 @@
   --muted: #6f675c;
   --rule: rgba(27, 23, 20, 0.16);
   --rule-strong: #1b1714;
-  --memes: #8e2f2b;
+  --memes: #9c4308;
   --places: #8a5a22;
   --things: #1c3d66;
   --gems: #1d5c46;
@@ -27,7 +27,7 @@ html[data-theme="dark"] {
   --muted: #b3a89a;
   --rule: rgba(243, 238, 230, 0.16);
   --rule-strong: #f3eee6;
-  --memes: #e08a7a;
+  --memes: #f0913a;
   --places: #e2b56a;
   --things: #9ec0dc;
   --gems: #8dccb0;
