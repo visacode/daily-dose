@@ -8,12 +8,12 @@
   --rule: rgba(27, 23, 20, 0.16);
   --rule-strong: #1b1714;
   --accent: #9c4308;
-  --memes: #9c4308;
-  --places: #6f6410;
-  --things: #1c3d66;
-  --gems: #1d5c46;
-  --gemPlaces: #1d5c46;
-  --gemApps: #1d5c46;
+  --memes: var(--accent);
+  --places: var(--accent);
+  --things: var(--accent);
+  --gems: var(--accent);
+  --gemPlaces: var(--accent);
+  --gemApps: var(--accent);
   --serif: "Newsreader Variable", Newsreader, "Iowan Old Style", Palatino, "Palatino Linotype", serif;
   --sans: "Source Sans 3 Variable", "Source Sans 3", "Segoe UI", sans-serif;
   --shadow: 0 16px 40px rgba(27, 23, 20, 0.08);
@@ -29,12 +29,12 @@ html[data-theme="dark"] {
   --rule: rgba(243, 238, 230, 0.16);
   --rule-strong: #f3eee6;
   --accent: #f0913a;
-  --memes: #f0913a;
-  --places: #e3c766;
-  --things: #9ec0dc;
-  --gems: #8dccb0;
-  --gemPlaces: #8dccb0;
-  --gemApps: #8dccb0;
+  --memes: var(--accent);
+  --places: var(--accent);
+  --things: var(--accent);
+  --gems: var(--accent);
+  --gemPlaces: var(--accent);
+  --gemApps: var(--accent);
   --shadow: none;
 }
 
