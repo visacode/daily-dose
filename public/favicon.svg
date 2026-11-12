@@ -2,6 +2,6 @@
   <rect width="64" height="64" rx="12" fill="#f4efe6"/>
   <defs><clipPath id="dd"><path clip-rule="evenodd" d="M13 14h8a18 18 0 0 1 0 36h-8zM20 21v22h1a11 11 0 0 0 0-22z"/></clipPath></defs>
   <path fill="#1b1714" fill-rule="evenodd" d="M13 14h8a18 18 0 0 1 0 36h-8zM20 21v22h1a11 11 0 0 0 0-22z"/>
-  <path fill="#d2600f" fill-rule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z"/>
-  <path clip-path="url(#dd)" fill="#7d3407" fill-rule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z"/>
+  <path fill="#2b6cc4" fill-rule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z"/>
+  <path clip-path="url(#dd)" fill="#163a6e" fill-rule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z"/>
 </svg>
