@@ -16,6 +16,7 @@ type Dose = {
   archiveState: "idle" | "loading" | "ready";
   searchAll: boolean;
   setSearchAll: (value: boolean) => void;
+  needArchive: () => void;
   reload: () => Promise<void>;
   selectDay: (date: string) => Promise<void>;
   personal: ReturnType<typeof usePersonal>;
@@ -39,6 +40,8 @@ export function DoseProvider({ children }: { children: ReactNode }) {
   const [archive, setArchive] = useState<Edition[]>([]);
   const [archiveState, setArchiveState] = useState<"idle" | "loading" | "ready">("idle");
   const [searchAll, setSearchAll] = useState(false);
+  const [wantArchive, setWantArchive] = useState(false);
+  const needArchive = useCallback(() => setWantArchive(true), []);
   const [toast, setToast] = useState("");
   const [quick, setQuick] = useState<Item | null>(null);
 
@@ -69,7 +72,7 @@ export function DoseProvider({ children }: { children: ReactNode }) {
   }, [personal.touchStreak]);
 
   useEffect(() => {
-    if (!searchAll || !index || !edition) return;
+    if ((!searchAll && !wantArchive) || !index || !edition) return;
     const missing = index.days.filter((day) => day.date !== edition.date);
     if (missing.length === 0) {
       setArchiveState("ready");
@@ -93,7 +96,7 @@ export function DoseProvider({ children }: { children: ReactNode }) {
     return () => {
       cancel = true;
     };
-  }, [searchAll, index, edition]);
+  }, [searchAll, wantArchive, index, edition]);
 
   const selectDay = useCallback(async (date: string) => {
     if (!index || !edition || date === edition.date) return;
@@ -141,6 +144,7 @@ export function DoseProvider({ children }: { children: ReactNode }) {
     archiveState,
     searchAll,
     setSearchAll,
+    needArchive,
     reload: load,
     selectDay,
     personal,
@@ -150,7 +154,7 @@ export function DoseProvider({ children }: { children: ReactNode }) {
     quick,
     setQuick,
     findItem,
-  }), [archive, archiveState, edition, error, findItem, index, load, loading, pending, personal, quick, searchAll, selectDay, share, toast]);
+  }), [archive, archiveState, edition, error, findItem, index, load, loading, needArchive, pending, personal, quick, searchAll, selectDay, share, toast]);
 
   return <DoseContext.Provider value={value}>{children}</DoseContext.Provider>;
 }

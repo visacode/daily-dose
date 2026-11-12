@@ -35,6 +35,14 @@ export function StoryView() {
     if (item) dose.personal.markSeen(item.href);
   }, [item, dose.personal]);
 
+  // A story from an earlier day is not in the edition on screen. Open the back
+  // issues so old, saved, and shared links keep working after a new day lands.
+  const inIssue = Boolean(dose.edition?.items.some((entry) => entry.href === href));
+  const needArchive = dose.needArchive;
+  useEffect(() => {
+    if (href && dose.edition && !inIssue) needArchive();
+  }, [href, dose.edition, inIssue, needArchive]);
+
   useEffect(() => {
     document.title = item ? `${item.title} — Daily Dose` : "Daily Dose";
     if (item) {
@@ -45,6 +53,14 @@ export function StoryView() {
     }
     return () => { document.title = "Daily Dose"; };
   }, [item]);
+
+  if (!item && dose.edition && dose.index && dose.index.days.length > 1 && dose.archiveState !== "ready") {
+    return (
+      <article className="story">
+        <p className="status">Opening the back issues…</p>
+      </article>
+    );
+  }
 
   if (!item || !dose.edition || !dose.index) {
     return (

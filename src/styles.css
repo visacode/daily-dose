@@ -71,6 +71,10 @@ img { max-width: 100%; display: block; }
 .mark { width: 0.78em; height: 0.78em; flex: none; }
 .dateline, .issue-no { margin: 8px 0 0; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .issue-no { margin: 0 0 6px; color: var(--ink); }
+.day-nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; margin-top: 12px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.day-nav a { padding: 6px 0; text-decoration: none; color: var(--muted); }
+.day-nav a:hover { color: var(--ink); }
+.day-nav > :last-child { text-align: right; }
 .rules { margin-top: 14px; }
 .rules span { display: block; background: var(--rule-strong); }
 .rules span:first-child { height: 3px; }
