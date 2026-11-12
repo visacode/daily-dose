@@ -2,7 +2,6 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDose } from "../dose";
 import { issueNo, sectionPath, storyHrefFromPath, storyPath, topPath } from "../magazine";
-import { Mark } from "./pieces";
 import { ScrollMemory } from "./ScrollMemory";
 
 const LINKS = [
@@ -109,7 +108,7 @@ export function Shell() {
       <header className="masthead">
         <div className="wrap masthead-top">
           <div>
-            <p className="wordmark"><NavLink to={home} end><Mark />Daily Dose</NavLink></p>
+            <p className="wordmark"><NavLink to={home} end>Daily Dose</NavLink></p>
             <p className="dateline">{edition?.updated ?? "Today"} · Riyadh</p>
           </div>
           <p className="issue-no">{index && edition ? `No. ${issueNo(index, edition.date)}` : "Riyadh"}</p>

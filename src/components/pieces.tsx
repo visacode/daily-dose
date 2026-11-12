@@ -5,17 +5,6 @@ import { byline, kickerLabel, readMinutes, storyPath } from "../magazine";
 import { cardThumb } from "../media";
 import type { Item } from "../types";
 
-export function Mark({ className = "mark" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
-      <defs><clipPath id="dd-clip"><path clipRule="evenodd" d="M13 14h8a18 18 0 0 1 0 36h-8zM20 21v22h1a11 11 0 0 0 0-22z" /></clipPath></defs>
-      <path fill="currentColor" fillRule="evenodd" d="M13 14h8a18 18 0 0 1 0 36h-8zM20 21v22h1a11 11 0 0 0 0-22z" />
-      <path fill="var(--accent)" fillRule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z" />
-      <path clipPath="url(#dd-clip)" fill="color-mix(in srgb, var(--accent) 62%, var(--ink))" fillRule="evenodd" d="M25 14h8a18 18 0 0 1 0 36h-8zM32 21v22h1a11 11 0 0 0 0-22z" />
-    </svg>
-  );
-}
-
 export function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
