@@ -1,6 +1,11 @@
 {
-  "latest": "2026-11-19",
+  "latest": "2026-11-20",
   "days": [
+    {
+      "date": "2026-11-20",
+      "updated": "Fri 20 Nov 2026",
+      "count": 31
+    },
     {
       "date": "2026-11-19",
       "updated": "Thu 19 Nov 2026",
