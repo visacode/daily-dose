@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Speed Test</title>
+<style>
+:root{color-scheme:light dark;--bg:#0f1115;--card:#181b22;--tx:#e9ecf1;--mut:#8a93a3;--ac:#3b82f6}
+@media(prefers-color-scheme:light){:root{--bg:#f5f6f8;--card:#fff;--tx:#111;--mut:#667}}
+body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);display:flex;justify-content:center;padding:32px 16px}
+.w{max-width:520px;width:100%}h1{font-size:22px;margin:0 0 4px}p{color:var(--mut);margin:0 0 20px;font-size:14px}
+.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.c{background:var(--card);border-radius:14px;padding:16px;text-align:center}
+.l{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}.v{font-size:28px;font-weight:700;margin-top:6px}.u{font-size:12px;color:var(--mut)}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-size:16px;font-weight:600}
+button:disabled{opacity:.6}#s{margin-top:14px;font-size:13px;color:var(--mut);text-align:center;min-height:18px}
+.bar{height:6px;background:var(--card);border-radius:3px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .2s}
+</style></head><body><div class="w">
+<h1>Speed Test</h1><p>Measures your connection using Cloudflare's speed-test servers.</p>
+<div class="g"><div class="c"><div class="l">Ping</div><div class="v" id="p">–</div><div class="u">ms</div></div>
+<div class="c"><div class="l">Download</div><div class="v" id="d">–</div><div class="u">Mbps</div></div>
+<div class="c"><div class="l">Upload</div><div class="v" id="up">–</div><div class="u">Mbps</div></div></div>
+<button id="b">Start test</button><div class="bar"><i id="pr"></i></div><div id="s"></div></div>
+<script>
+const B='https://speed.cloudflare.com',$=id=>document.getElementById(id);
+const st=t=>$('s').textContent=t,prog=x=>$('pr').style.width=x+'%';
+async function ping(){const a=[];for(let i=0;i<8;i++){const t=performance.now();await fetch(B+'/__down?bytes=0&r='+Math.random(),{cache:'no-store'});a.push(performance.now()-t)}a.sort((x,y)=>x-y);return a.slice(0,4).reduce((x,y)=>x+y)/4}
+async function down(){let bytes=0;const t0=performance.now(),dur=8000;const one=async()=>{while(performance.now()-t0<dur){const r=await fetch(B+'/__down?bytes=25000000&r='+Math.random(),{cache:'no-store'});const rd=r.body.getReader();while(true){const {done,value}=await rd.read();if(done)break;bytes+=value.length;const el=(performance.now()-t0);$('d').textContent=(bytes*8/el/1000).toFixed(1);prog(10+45*Math.min(el/dur,1));if(el>dur){rd.cancel();return}}}};await Promise.all([one(),one(),one(),one()]);return bytes*8/(performance.now()-t0)/1000}
+async function upl(){const chunk=new Uint8Array(5e6);let bytes=0;const t0=performance.now(),dur=8000;const one=async()=>{while(performance.now()-t0<dur){await fetch(B+'/__up',{method:'POST',body:chunk});bytes+=chunk.length;const el=performance.now()-t0;$('up').textContent=(bytes*8/el/1000).toFixed(1);prog(55+45*Math.min(el/dur,1))}};await Promise.all([one(),one(),one()]);return bytes*8/(performance.now()-t0)/1000}
+$('b').onclick=async()=>{const b=$('b');b.disabled=true;['p','d','up'].forEach(i=>$(i).textContent='–');prog(0);
+try{st('Testing ping…');$('p').textContent=(await ping()).toFixed(0);prog(10);st('Testing download…');$('d').textContent=(await down()).toFixed(1);st('Testing upload…');$('up').textContent=(await upl()).toFixed(1);prog(100);st('Done · '+new Date().toLocaleTimeString())}
+catch(e){st('Test failed: '+e.message)}b.disabled=false;b.textContent='Run again'};
+</script></body></html>
